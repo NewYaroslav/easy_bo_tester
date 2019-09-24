@@ -8,42 +8,45 @@ namespace easy_bo {
 
     /** \brief Класс простого тестера для измерения эфективности торговли бинарными опицонами
      */
+    template<class UINT_TYPE = uint32_t>
     class SimplifedTester {
     private:
-        uint32_t wins = 0;  /**< Число выигрышей */
-        uint32_t losses = 0;/**< Число проигрышей */
+        UINT_TYPE wins = 0;  /**< Число выигрышей */
+        UINT_TYPE losses = 0;/**< Число проигрышей */
     public:
         SimplifedTester() {};
 
         /** \brief Получить винрейт
          * \return Винрейт, число от 0.0 до 1.0
          */
-        inline double get_winrate() {
-            uint32_t sum = wins + losses;
-            return sum == 0 ? 0.0 : (double)wins / (double)sum;
+        template<class FLOAT_TYPE>
+        inline FLOAT_TYPE get_winrate() {
+            UINT_TYPE sum = wins + losses;
+            return sum == 0 ? 0.0 : (FLOAT_TYPE)wins / (FLOAT_TYPE)sum;
         }
 
         /** \brief Получить количество сделок
          * \return количество сделок
          */
-        inline uint32_t get_deals() {
+        inline UINT_TYPE get_deals() {
             return wins + losses;
         }
 
         /** \brief Получить число выигрышей
          * \return число выигрышей
          */
-        inline uint32_t get_wins() {return wins;};
+        inline UINT_TYPE get_wins() {return wins;};
 
         /** \brief Получить число проигрышей
          * \return число проигрышей
          */
-        inline uint32_t get_losses() {return losses;};
+        inline UINT_TYPE get_losses() {return losses;};
 
         /** \brief Добавить сделку
          * \param result Результат опциона
          */
-        void add_deal(const int8_t &result) {
+        template<class INT_TYPE>
+        void add_deal(const INT_TYPE &result) {
             if(result == EASY_BO_WIN) ++wins;
             else if(result == EASY_BO_LOSS) ++losses;
         }

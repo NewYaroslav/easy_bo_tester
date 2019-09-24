@@ -20,9 +20,10 @@ namespace easy_bo {
     /** \brief Бинарный опицон
      * Данный класс хранит данные о бинарном опционе
      */
+    template<class T1>
     class BinaryOption {
     public:
-        double payout = 0.0;                /**< Выплата брокера. От 0.0, 1.0 соответствует 100% */
+        T1 payout = 0.0;                    /**< Выплата брокера. От 0.0, 1.0 соответствует 100% */
         xtime::timestamp_t timestamp = 0;   /**< Метка времени начала опицона */
         uint32_t duration = 0;              /**< Продолжительность опциона в секундах */
         int8_t direction = EASY_BO_NO_BET;  /**< Направление ставки, покупка или продажа опциона */
@@ -31,7 +32,7 @@ namespace easy_bo {
         BinaryOption() {};
 
         BinaryOption(
-                const double &p,
+                const T1 &p,
                 const xtime::timestamp_t &t,
                 const uint32_t &dur,
                 const int8_t &dir,
@@ -82,20 +83,20 @@ namespace easy_bo {
      * \param array_depo массив депозита
      * \return значение консистенции
      */
-    template<typename T>
-    double calc_profit_stability(const T &array_depo) {
+    template<class T1, class T2>
+    T1 calc_profit_stability(const T2 &array_depo) {
         size_t size = array_depo.size();
         if(size == 0) return  0.0;
-        double start_depo = std::log(array_depo.front());
-        double stop_depo = std::log(array_depo.back());
-        double delta = (double)(stop_depo - start_depo) / (double)(size - 1);
-        double sum = 0;
+        T1 start_depo = std::log(array_depo.front());
+        T1 stop_depo = std::log(array_depo.back());
+        T1 delta = (T1)(stop_depo - start_depo) / (T1)(size - 1);
+        T1 sum = 0;
         for(size_t i = 1; i < array_depo.size(); ++i) {
-            double y = start_depo + delta * (double)i;
-            double diff = std::log(array_depo[i]) - y;
+            T1 y = start_depo + delta * (T1)i;
+            T1 diff = std::log(array_depo[i]) - y;
             sum += diff * diff;
         }
-        sum /= (double)(size - 1);
+        sum /= (T1)(size - 1);
         return sum;
     }
 
@@ -105,17 +106,17 @@ namespace easy_bo {
      * \param array_depo массив депозита
      * \return средняя геометрическая доходность
      */
-    template<typename T>
-    double calc_geometric_average_return(const T &array_depo) {
+    template<class T1, class T2>
+    T1 calc_geometric_average_return(const T2 &array_depo) {
         size_t size = array_depo.size();
         if(size < 1) return 0.0;
-        double mx = 1.0;
+        T1 mx = 1.0;
         for(size_t i = 1; i < size; i++) {
-            double ri = array_depo[i - 1] > 0.0 ?
-                1.0 + ((double)(array_depo[i] - array_depo[i - 1]) / (double)array_depo[i - 1]) : 0;
+            T1 ri = array_depo[i - 1] > 0.0 ?
+                1.0 + ((T1)(array_depo[i] - array_depo[i - 1]) / (T1)array_depo[i - 1]) : 0;
             mx *= ri;
         }
-        return std::pow(mx, 1.0/(double)(size - 1)) - 1.0;
+        return std::pow(mx, 1.0/(T1)(size - 1)) - 1.0;
     }
 
     /** \brief Посчитать коэффициент Шарпа
@@ -126,23 +127,23 @@ namespace easy_bo {
      * \param array_depo массив депозита
      * \return коэффициент Шарпа
      */
-    template<typename T>
-    double calc_sharpe_ratio(const T &array_depo) {
-        double re = calc_geometric_average_return(array_depo);
+    template<class T1, class T2>
+    T1 calc_sharpe_ratio(const T2 &array_depo) {
+        T1 re = calc_geometric_average_return<T1>(array_depo);
         if(re == 0) return 0.0;
-        double sum = 0;
+        T1 sum = 0;
         size_t size = array_depo.size();
         for(size_t i = 1; i < size; ++i) {
-            double ri = array_depo[i - 1] > 0 ?
-                ((double)(array_depo[i] - array_depo[i - 1]) / (double)array_depo[i - 1]) : 0;
-            double diff = ri - re;
+            T1 ri = array_depo[i - 1] > 0 ?
+                ((T1)(array_depo[i] - array_depo[i - 1]) / (T1)array_depo[i - 1]) : 0;
+            T1 diff = ri - re;
             sum += diff * diff;
         }
 
-        if(sum == 0 && re > 0) return std::numeric_limits<double>::max();
-        else if(sum == 0 && re < 0) return std::numeric_limits<double>::lowest();
+        if(sum == 0 && re > 0) return std::numeric_limits<T1>::max();
+        else if(sum == 0 && re < 0) return std::numeric_limits<T1>::lowest();
         // так как в вычислениях первый элемент - начальный уровень депозита, то size - 2
-        sum /= (double)(size - 2);
+        sum /= (T1)(size - 2);
         return (re / std::sqrt(sum));
     }
 };
