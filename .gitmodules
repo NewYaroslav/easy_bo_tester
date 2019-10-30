@@ -1,3 +1,18 @@
 [submodule "lib/xtime_cpp"]
 	path = lib/xtime_cpp
 	url = https://github.com/NewYaroslav/xtime_cpp.git
+[submodule "lib/easy_plot_cpp"]
+	path = lib/easy_plot_cpp
+	url = https://github.com/NewYaroslav/easy_plot_cpp.git
+[submodule "lib/xquotes_history"]
+	path = lib/xquotes_history
+	url = https://github.com/NewYaroslav/xquotes_history.git
+[submodule "lib/xtechnical_analysis"]
+	path = lib/xtechnical_analysis
+	url = https://github.com/NewYaroslav/xtechnical_analysis.git
+[submodule "lib/zstd"]
+	path = lib/zstd
+	url = https://github.com/facebook/zstd.git
+[submodule "lib/banana-filesystem-cpp"]
+	path = lib/banana-filesystem-cpp
+	url = https://github.com/NewYaroslav/banana-filesystem-cpp.git
