@@ -306,29 +306,31 @@ namespace easy_bo {
         }
 
         /** \brief Получить количество сделок
-         * \return количество сделок
+         * \return Количество сделок
          */
         inline uint64_t get_deals() {
             return wins + losses;
         }
 
-        /** \brief Получить число удачных сделок
-         * \return Число удачных сделок
+        /** \brief Получить количество удачных сделок
+         * \return Количество удачных сделок
          */
         inline uint64_t get_wins() {return wins;};
 
-        /** \brief Получить число убыточных сделок
-         * \return Число убыточных сделок
+        /** \brief Получить количество убыточных сделок
+         * \return Количество убыточных сделок
          */
         inline uint64_t get_losses() {return losses;};
 
         /** \brief Получить математическое ожидание прибыли
+         *
+         * Этот статистически рассчитываемый показатель отражает среднюю прибыльность/убыточность одной сделки
          * \param profit выплата брокера в случае успеха (обычно от 0 до 1.0, но можно больше 1.0)
          * \param loss потери в случае поражения (обычно всегда 1.0)
-         * \return математическое ожидание прибыли
+         * \return Математическое ожидание прибыли, выраженное в процентах от ставки (например, 0.01 означает прибыль 1% от ставки).
          */
-        double get_expected_value(const double profit, const double loss = 1.0) {
-            return calc_expectation(get_winrate(), profit, loss);
+        double get_expected_payoff(const double profit, const double loss = 1.0) {
+            return calc_expected_payoff(get_winrate(), profit, loss);
         }
 
         /** \brief Получить общую прибыль (Gross Profit)
@@ -360,7 +362,7 @@ namespace easy_bo {
          * Единица означает, что сумма прибылей равна сумме убытков
          * \return Прибыльность (Profit Factor)
          */
-        double get_profit_factor() {return gross_loss == 0.0 ? 1.0 : gross_profit/gross_loss;};
+        double get_profit_factor() {return gross_loss == 0.0 ? std::numeric_limits<float>::max() : gross_profit/gross_loss;};
 
         /** \brief Получить абсолютную просадку баланса (Balance Drawdown Absolute)
          *
@@ -405,7 +407,7 @@ namespace easy_bo {
 
         /** \brief Получить коэффициент Шарпа
          *
-         * Данный вариант функции пригоден для экспоненциального роста депозита
+         * Данный вариант метода пригоден только для экспоненциального роста депозита
          * коэффициент Шарпа 1 и выше — оптимальное значение коэффициента,
          * обозначающее хорошую стратегию или высокую результативность управления портфелем ценных бумаг
          * \param curve_type Тип кривой. По умолчанию USE_EQUITY_CURVE - использовать кривую средств.

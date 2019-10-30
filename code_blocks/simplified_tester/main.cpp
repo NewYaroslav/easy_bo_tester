@@ -25,7 +25,7 @@ int main()
     cout << "winrate: " << iSimplifedTester.get_winrate<float>() << endl;
     cout << "deals: " << iSimplifedTester.get_deals() << endl;
 
-    double expect = easy_bo::calc_expectation(0.6,0.8);
+    double expect = easy_bo::calc_expected_payoff(0.6,0.8);
     cout << "expected value: " << expect << endl;
     double min_winrate = easy_bo::calc_min_winrate(0.8);
     cout << "min winrate: " << min_winrate << endl;

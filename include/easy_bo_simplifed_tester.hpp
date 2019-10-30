@@ -49,19 +49,19 @@ namespace easy_bo {
         }
 
         /** \brief Получить количество сделок
-         * \return количество сделок
+         * \return Количество сделок
          */
         inline UINT_TYPE get_deals() {
             return wins + losses;
         }
 
-        /** \brief Получить число выигрышей
-         * \return число выигрышей
+        /** \brief Получить количество выигрышей
+         * \return Количество удачных сделок
          */
         inline UINT_TYPE get_wins() {return wins;};
 
-        /** \brief Получить число проигрышей
-         * \return число проигрышей
+        /** \brief Получить количество проигрышей
+         * \return Количество убыточных сделок
          */
         inline UINT_TYPE get_losses() {return losses;};
 
@@ -112,13 +112,15 @@ namespace easy_bo {
         }
 
         /** \brief Получить математическое ожидание прибыли
+         *
+         * Этот статистически рассчитываемый показатель отражает среднюю прибыльность/убыточность одной сделки
          * \param profit выплата брокера в случае успеха (обычно от 0 до 1.0, но можно больше 1.0)
          * \param loss потери в случае поражения (обычно всегда 1.0)
-         * \return математическое ожидание прибыли
+         * \return Математическое ожидание прибыли, выраженное в процентах от ставки (например, 0.01 означает прибыль 1% от ставки).
          */
         template<class T>
-        T get_expected_value(const T &profit, const T &loss = 1.0) {
-            return calc_expectation((T)get_winrate(), profit, loss);
+        T get_expected_payoff(const T &profit, const T &loss = 1.0) {
+            return calc_expected_payoff((T)get_winrate(), profit, loss);
         }
     };
 };

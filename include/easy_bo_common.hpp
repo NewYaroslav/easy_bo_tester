@@ -72,10 +72,10 @@ namespace easy_bo {
      * \param winrate эффективность стратегии (от 0 до 1.0)
      * \param profit выплата брокера в случае успеха (обычно от 0 до 1.0, но можно больше 1.0)
      * \param loss потери в случае поражения (обычно всегда 1.0)
-     * \return математическое ожидание прибыли
+     * \return Математическое ожидание прибыли. Значение в процентах от ставки (например, 0.01 означает прибыль 1% от ставки)
      */
     template<class T>
-    T calc_expectation(const T &winrate, const T &profit, const T &loss = 1.0) {
+    T calc_expected_payoff(const T &winrate, const T &profit, const T &loss = 1.0) {
         if(winrate > 1.0 || winrate < 0.0) return 0.0;
         return (winrate * profit) - ((1.0 - winrate) * loss);
     }
