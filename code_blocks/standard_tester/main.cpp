@@ -20,6 +20,7 @@ int main() {
     std::cout << "test-1 winrate: " << iStandardTester.get_winrate() << std::endl;
     std::cout << "test-1 wins: " << iStandardTester.get_wins() << std::endl;
     std::cout << "test-1 losses: " << iStandardTester.get_losses() << std::endl;
+    std::cout << "test-1 gain: " << iStandardTester.get_gain() << std::endl;
     std::vector<double> balance = iStandardTester.get_balance_curve();
     std::vector<double> equity = iStandardTester.get_equity_curve();
     for(size_t i = 0; i < balance.size(); ++i) {
@@ -52,6 +53,7 @@ int main() {
     std::cout << "test-2 winrate: " << iStandardTester.get_winrate() << std::endl;
     std::cout << "test-2 wins: " << iStandardTester.get_wins() << std::endl;
     std::cout << "test-2 losses: " << iStandardTester.get_losses() << std::endl;
+    std::cout << "test-2 gain: " << iStandardTester.get_gain() << std::endl;
     std::cout << "test-2 profit factor: " << iStandardTester.get_profit_factor() << std::endl;
     std::cout << "test-2 balance drawdown relative: " << iStandardTester.get_balance_drawdown_relative() << std::endl;
     std::cout << "test-2 sharpe ratio: " << iStandardTester.get_sharpe_ratio() << std::endl;

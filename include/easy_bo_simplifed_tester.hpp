@@ -120,7 +120,7 @@ namespace easy_bo {
          */
         template<class T>
         T get_expected_payoff(const T &profit, const T &loss = 1.0) {
-            return calc_expected_payoff((T)get_winrate(), profit, loss);
+            return calc_expected_payoff((T)get_winrate<T>(), profit, loss);
         }
     };
 };

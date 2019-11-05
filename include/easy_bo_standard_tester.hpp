@@ -405,6 +405,15 @@ namespace easy_bo {
             return 0.0;
         }
 
+        /** \brief Получить усиление депозита
+         * \param curve_type Тип кривой. По умолчанию USE_EQUITY_CURVE - использовать кривую средств.
+         * \return усиление депозита
+         */
+        double get_gain(const uint8_t curve_type = USE_EQUITY_CURVE) {
+            if(array_equity.size() == 0) return 1.0;
+            return array_equity.back() / start_deposit;
+        }
+
         /** \brief Получить коэффициент Шарпа
          *
          * Данный вариант метода пригоден только для экспоненциального роста депозита
