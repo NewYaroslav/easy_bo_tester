@@ -52,5 +52,11 @@ int main()
     cout << "sharpe ratio good: " << sharpe_ratio_good  << endl;
     cout << "sharpe ratio bad: " << sharpe_ratio_bad  << endl;
     cout << "sharpe ratio super bad: " << sharpe_ratio_super_bad  << endl;
+    sharpe_ratio_good = easy_bo::calc_fast_sharpe_ratio<float>(depo_good2);
+    sharpe_ratio_bad = easy_bo::calc_fast_sharpe_ratio<float>(depo_bad);
+    sharpe_ratio_super_bad = easy_bo::calc_fast_sharpe_ratio<float>(depo_super_bad);
+    cout << "fast sharpe ratio good: " << sharpe_ratio_good  << endl;
+    cout << "fast sharpe ratio bad: " << sharpe_ratio_bad  << endl;
+    cout << "fast sharpe ratio super bad: " << sharpe_ratio_super_bad  << endl;
     return 0;
 }

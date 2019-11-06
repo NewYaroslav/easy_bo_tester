@@ -58,5 +58,6 @@ int main() {
     std::cout << "test-2 sharpe ratio: " << iOptimizationTester.get_sharpe_ratio() << std::endl;
     std::cout << "test-2 expected payoff: " << iOptimizationTester.get_expected_payoff(0.8) << std::endl;
     std::cout << "test-2 total net profit: " << iOptimizationTester.get_total_net_profit() << std::endl;
+    std::cout << "test-2 fast sharpe ratio: " << iOptimizationTester.get_fast_sharpe_ratio() << std::endl;
     return 0;
 }

@@ -29,6 +29,7 @@
 			<Add option="-fexceptions" />
 		</Compiler>
 		<Unit filename="../../include/easy_bo_common.hpp" />
+		<Unit filename="../../include/easy_bo_math.hpp" />
 		<Unit filename="../../include/easy_bo_optimization_tester.hpp" />
 		<Unit filename="../../include/easy_bo_simplifed_tester.hpp" />
 		<Unit filename="../../include/easy_bo_standard_tester.hpp" />

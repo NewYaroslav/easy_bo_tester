@@ -57,6 +57,7 @@ int main() {
     std::cout << "test-2 profit factor: " << iStandardTester.get_profit_factor() << std::endl;
     std::cout << "test-2 balance drawdown relative: " << iStandardTester.get_balance_drawdown_relative() << std::endl;
     std::cout << "test-2 sharpe ratio: " << iStandardTester.get_sharpe_ratio() << std::endl;
+    std::cout << "test-2 fast sharpe ratio: " << iStandardTester.get_fast_sharpe_ratio() << std::endl;
     std::cout << "test-2 expected payoff: " << iStandardTester.get_expected_payoff(0.8) << std::endl;
     std::cout << "test-2 total net profit: " << iStandardTester.get_total_net_profit() << std::endl;
     return 0;

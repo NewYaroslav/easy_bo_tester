@@ -251,6 +251,17 @@ namespace easy_bo {
         double get_sharpe_ratio() {
             return calc_sharpe_ratio<double>(array_equity);
         }
+
+        /** \brief Получить быстрый коэффициент Шарпа
+         *
+         * Данный вариант метода пригоден только для экспоненциального роста депозита
+         * коэффициент Шарпа 1 и выше — оптимальное значение коэффициента,
+         * обозначающее хорошую стратегию или высокую результативность управления портфелем ценных бумаг
+         * \return Коэффициент Шарпа
+         */
+        double get_fast_sharpe_ratio() {
+            return calc_fast_sharpe_ratio<double>(array_equity);
+        }
     };
 }
 

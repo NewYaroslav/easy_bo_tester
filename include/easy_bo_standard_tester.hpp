@@ -427,6 +427,20 @@ namespace easy_bo {
             else if(curve_type == USE_BALANCE_CURVE) return calc_sharpe_ratio<double>(array_balance);
             return 0.0;
         }
+
+        /** \brief Получить быстрый коэффициент Шарпа
+         *
+         * Данный вариант метода пригоден только для экспоненциального роста депозита
+         * коэффициент Шарпа 1 и выше — оптимальное значение коэффициента,
+         * обозначающее хорошую стратегию или высокую результативность управления портфелем ценных бумаг
+         * \param curve_type Тип кривой. По умолчанию USE_EQUITY_CURVE - использовать кривую средств.
+         * \return Коэффициент Шарпа
+         */
+        double get_fast_sharpe_ratio(const uint8_t curve_type = USE_EQUITY_CURVE) {
+            if(curve_type == USE_EQUITY_CURVE) return calc_fast_sharpe_ratio<double>(array_equity);
+            else if(curve_type == USE_BALANCE_CURVE) return calc_fast_sharpe_ratio<double>(array_balance);
+            return 0.0;
+        }
     };
 }
 

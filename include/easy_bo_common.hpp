@@ -28,6 +28,7 @@
 #include <cmath>
 #include <limits>
 #include <algorithm>
+#include "easy_bo_math.hpp"
 
 namespace easy_bo {
 
@@ -175,6 +176,35 @@ namespace easy_bo {
         // так как в вычислениях первый элемент - начальный уровень депозита, то size - 2
         sum /= (T1)(size - 2);
         return (re / std::sqrt(sum));
+    }
+
+    /** \brief Посчитать коэффициент Шарпа быстро
+     *
+     * Первый элемент массива должен быть начальным уровнем депозита (депозит до первой сделки)
+     * Данный вариант функции пригоден для экспоненциального роста депозита
+     * коэффициент Шарпа 1 и выше — оптимальное значение коэффициента,
+     * обозначающее хорошую стратегию или высокую результативность управления портфелем ценных бумаг
+     * \param array_depo массив депозита
+     * \return коэффициент Шарпа
+     */
+    template<class T1, class T2>
+    T1 calc_fast_sharpe_ratio(const T2 &array_depo) {
+        T1 re = calc_geometric_average_return<T1>(array_depo);
+        if(re == 0) return 0.0;
+        T1 sum = 0;
+        size_t size = array_depo.size();
+        for(size_t i = 1; i < size; ++i) {
+            T1 ri = array_depo[i - 1] > 0 ?
+                ((T1)(array_depo[i] - array_depo[i - 1]) / (T1)array_depo[i - 1]) : 0;
+            T1 diff = ri - re;
+            sum += diff * diff;
+        }
+
+        if(sum == 0 && re > 0) return std::numeric_limits<T1>::max();
+        else if(sum == 0 && re < 0) return std::numeric_limits<T1>::lowest();
+        // так как в вычислениях первый элемент - начальный уровень депозита, то size - 2
+        sum /= (T1)(size - 2);
+        return (re * easy_bo_math::inv_sqrt(sum));
     }
 
     /** \brief Рассчитать абсолютную просадку баланса (Balance Drawdown Absolute)
