@@ -21,8 +21,10 @@ namespace easy_bo {
         UINT_TYPE losses = 0;               /**< Число убыточных сделок */
         std::vector<uint8_t> state;         /**< Массив состояний */
         std::vector<double> array_equity;   /**< Кривая средств. Это количество средств с учетом результатов по текущим открытым позициям */
+        size_t reserve_size = 200;
     public:
-        OptimizationTester(const size_t reserve_size = 100) {
+
+        OptimizationTester(const size_t bo_reserve_size = 256) : reserve_size(bo_reserve_size) {
             state.reserve(reserve_size);
             array_equity.reserve(reserve_size);
         };
@@ -68,7 +70,8 @@ namespace easy_bo {
          * Необходимо вызывать данный метод по окончанию тестирования
          */
         void stop() {
-            for(size_t i = 0; i < state.size(); ++i) {
+            const size_t state_size = state.size();
+            for(size_t i = 0; i < state_size; ++i) {
                 wins += state[i];
                 losses += (1 - state[i]);
             }
@@ -80,6 +83,8 @@ namespace easy_bo {
         inline void clear() {
             state.clear();
             array_equity.clear();
+            state.reserve(reserve_size);
+            array_equity.reserve(reserve_size);
             wins = 0;
             losses = 0;
         }
@@ -94,14 +99,6 @@ namespace easy_bo {
                 add_deal(array_deals[i].result);
             }
         }
-
-        /** \brief Инициализировать тестер массивом сделок
-         * \param array_deals массив сделок, например std::vector<BinaryOption>
-         */
-        template<class T>
-        SimplifedTester(const T &array_deals) {
-            init(array_deals);
-        };
 
         /** \brief Инициализировать тестер массивом сделок
          * \param array_deals массив результата сделок
@@ -134,32 +131,53 @@ namespace easy_bo {
          */
         void calc_equity(const double bo_start_deposit, const double broker_payout, const double amount) {
             start_deposit = bo_start_deposit;
+            const size_t state_size = state.size();
             array_equity.clear();
+            array_equity.reserve(std::max(state_size + 1,reserve_size));
             array_equity.push_back(bo_start_deposit);
             if(amount > 1.0) {
                 const double profit = broker_payout * amount;
-                for(size_t i = 0; i < state.size(); ++i) {
-                    if(array_equity.back() <= 0) break;
+                for(size_t i = 0; i < state_size; ++i) {
+                    const double last_equity = array_equity.back();
                     if(state[i]) {
-                        array_equity.push_back(array_equity.back() + profit);
-                        gross_profit += profit;
+                        array_equity.push_back(last_equity + profit);
+                        //gross_profit += profit;
                     } else {
-                        array_equity.push_back(array_equity.back() - amount);
-                        gross_loss += amount;
+                        array_equity.push_back(last_equity - amount);
+                        //gross_loss += amount;
+                        if(array_equity.back() <= 0) break;
                     }
                 }
             } else {
-                for(size_t i = 0; i < state.size(); ++i) {
-                    if(array_equity.back() <= 0) break;
-                    const double risk = amount * array_equity.back();
+                for(size_t i = 0; i < state_size; ++i) {
+                    const double last_equity = array_equity.back();
+                    const double risk = amount * last_equity;
                     const double profit = broker_payout * risk;
                     if(state[i]) {
-                        array_equity.push_back(array_equity.back() + profit);
-                        gross_profit += profit;
+                        array_equity.push_back(last_equity + profit);
+                        //gross_profit += profit;
                     } else {
-                        array_equity.push_back(array_equity.back() - risk);
-                        gross_loss += risk;
+                        array_equity.push_back(last_equity - risk);
+                        //gross_loss += risk;
+                        if(array_equity.back() <= 0) break;
                     }
+                }
+            }
+        }
+
+        /** \brief Рассчитать Gross Profit и Gross Loss
+         *
+         * Данный метод нужен для рассчета Gross Profit и Gross Loss после того, как была расчитана кривая средств.
+         * Этот метод нужно вызывать перед получением Gross Profit и Gross Loss и пр.
+         */
+        void calc_gross_profit_loss() {
+            const size_t array_equity_size = array_equity.size();
+            for(size_t i = 1; i < array_equity_size; ++i) {
+                const double profit = array_equity[i] - array_equity[i - 1];
+                if(profit > 0) {
+                    gross_profit += profit;
+                } else {
+                    gross_loss += -profit;
                 }
             }
         }

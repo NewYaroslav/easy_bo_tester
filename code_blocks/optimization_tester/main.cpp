@@ -21,6 +21,7 @@ int main() {
     std::cout << "test-1 losses: " << iOptimizationTester.get_losses() << std::endl;
 
     iOptimizationTester.calc_equity(1000, 0.8, 0.01);
+    iOptimizationTester.calc_gross_profit_loss();
     std::cout << "test-1 gain: " << iOptimizationTester.get_gain() << std::endl;
     std::vector<double> equity = iOptimizationTester.get_equity_curve();
 
@@ -52,6 +53,7 @@ int main() {
     std::cout << "test-2 losses: " << iOptimizationTester.get_losses() << std::endl;
 
     iOptimizationTester.calc_equity(1000, 0.8, 0.01);
+    iOptimizationTester.calc_gross_profit_loss();
     std::cout << "test-2 gain: " << iOptimizationTester.get_gain() << std::endl;
     std::cout << "test-2 profit factor: " << iOptimizationTester.get_profit_factor() << std::endl;
     std::cout << "test-2 balance drawdown relative: " << iOptimizationTester.get_balance_drawdown_relative() << std::endl;
