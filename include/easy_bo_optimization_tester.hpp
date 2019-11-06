@@ -2,6 +2,7 @@
 #define EASY_BO_OPTIMIZATION_TESTER_HPP_INCLUDED
 
 #include "easy_bo_common.hpp"
+#include "easy_bo_algorithms.hpp"
 #include <vector>
 
 namespace easy_bo {
@@ -27,6 +28,7 @@ namespace easy_bo {
         OptimizationTester(const size_t bo_reserve_size = 256) : reserve_size(bo_reserve_size) {
             state.reserve(reserve_size);
             array_equity.reserve(reserve_size);
+            easy_bo::generate_table_sin_cos();
         };
 
         /** \brief Получить винрейт
@@ -75,6 +77,42 @@ namespace easy_bo {
                 wins += state[i];
                 losses += (1 - state[i]);
             }
+        }
+
+        /** \brief Получить коэффициент вариации
+         * Метод измерения отношения стандартного отклонения к среднему также известен как относительное стандартное отклонение,
+         * часто сокращенно обозначаемое как RSD.
+         * CV важно в области вероятности и статистики измерять относительную изменчивость наборов данных по шкале отношений.
+         * \return коэффициент вариации
+         */
+        float get_winrate_coefficient_variance() {
+            size_t state_size = state.size();
+            const float deals = wins + losses;
+            const float mean = (float)wins / deals;
+            float sum = 0.0;
+            for(size_t i = 0; i < state_size; ++i) {
+                float diff = (float)state[i] - mean;
+                diff *= diff;
+                sum += diff;
+            }
+            sum /= (float)(state_size - 1);
+            return (1.0/easy_bo_math::inv_sqrt(sum))/mean;
+        }
+
+        /** \brief Получить коэффициент лучшей стратегии
+         *
+         * Данный метод находит расстояне между лучшей точкой 3D пространства и точкой стратегии.
+         * Три оси 3D пространства соответствуют инверсному винрейту, стабильности стратегии (0 - лучшая стабильность), и инверсному количеству сделок.
+         * \param max_amount_deals Максимальное количество сделок
+         * \param revolutions Количество оборотов окружности, по умолчанию 1. Можно взять 3,5,7 оборота, чтобы исключить влияние  повторяющихся неоднородностей
+         * \return коэффициент лучшей стратегии
+         */
+        template<const bool is_use_negative = false>
+        float get_coeff_best3D(const uint32_t max_amount_deals, const uint32_t revolutions = 1) {
+            float stability = easy_bo::calc_centroid_circle<true, is_use_negative>(state, state.size(), revolutions);
+            float winrate = get_winrate<float>();
+            float deals = get_deals();
+            return calc_coeff_best3D(winrate, stability, deals, max_amount_deals);
         }
 
         /** \brief Очистить состояние тестера

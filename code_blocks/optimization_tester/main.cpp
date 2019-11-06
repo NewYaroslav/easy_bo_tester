@@ -19,6 +19,7 @@ int main() {
     std::cout << "test-1 winrate: " << iOptimizationTester.get_winrate<float>() << std::endl;
     std::cout << "test-1 wins: " << iOptimizationTester.get_wins() << std::endl;
     std::cout << "test-1 losses: " << iOptimizationTester.get_losses() << std::endl;
+    std::cout << "test-1 winrate coefficient variance: " << iOptimizationTester.get_winrate_coefficient_variance() << std::endl;
 
     iOptimizationTester.calc_equity(1000, 0.8, 0.01);
     iOptimizationTester.calc_gross_profit_loss();
@@ -42,7 +43,7 @@ int main() {
     /* начинаем имитацию торговли */
     for(uint32_t i = 0; i < 1000; ++i) {
         double p = (double)denominator(gen)/1000.0;
-        if(p <= 0.56) iOptimizationTester.add_deal(easy_bo::EASY_BO_WIN);
+        if(p <= 0.6) iOptimizationTester.add_deal(easy_bo::EASY_BO_WIN);
         else iOptimizationTester.add_deal(easy_bo::EASY_BO_LOSS);
     }
     /* завершаем торговлю */
@@ -51,6 +52,8 @@ int main() {
     std::cout << "test-2 winrate: " << iOptimizationTester.get_winrate<float>() << std::endl;
     std::cout << "test-2 wins: " << iOptimizationTester.get_wins() << std::endl;
     std::cout << "test-2 losses: " << iOptimizationTester.get_losses() << std::endl;
+    std::cout << "test-2 winrate coefficient variance: " << iOptimizationTester.get_winrate_coefficient_variance() << std::endl;
+    std::cout << "test-2 best3D: " << iOptimizationTester.get_coeff_best3D(1000) << std::endl;
 
     iOptimizationTester.calc_equity(1000, 0.8, 0.01);
     iOptimizationTester.calc_gross_profit_loss();
@@ -61,5 +64,39 @@ int main() {
     std::cout << "test-2 expected payoff: " << iOptimizationTester.get_expected_payoff(0.8) << std::endl;
     std::cout << "test-2 total net profit: " << iOptimizationTester.get_total_net_profit() << std::endl;
     std::cout << "test-2 fast sharpe ratio: " << iOptimizationTester.get_fast_sharpe_ratio() << std::endl;
+
+    std::cout << std::endl << "start test-3" << std::endl;
+    iOptimizationTester.clear();
+    iOptimizationTester.add_deal(easy_bo::EASY_BO_WIN);
+    iOptimizationTester.add_deal(easy_bo::EASY_BO_WIN);
+    iOptimizationTester.add_deal(easy_bo::EASY_BO_LOSS);
+    iOptimizationTester.add_deal(easy_bo::EASY_BO_WIN);
+    iOptimizationTester.add_deal(easy_bo::EASY_BO_LOSS);
+    iOptimizationTester.add_deal(easy_bo::EASY_BO_WIN);
+    iOptimizationTester.add_deal(easy_bo::EASY_BO_LOSS);
+    iOptimizationTester.add_deal(easy_bo::EASY_BO_WIN);
+    iOptimizationTester.add_deal(easy_bo::EASY_BO_WIN);
+    iOptimizationTester.add_deal(easy_bo::EASY_BO_LOSS);
+    iOptimizationTester.stop();
+    std::cout << "test-3 winrate coefficient variance: " << iOptimizationTester.get_winrate_coefficient_variance() << std::endl;
+    std::cout << "test-3 winrate: " << iOptimizationTester.get_winrate<float>() << std::endl;
+    std::cout << "test-3 best3D: " << iOptimizationTester.get_coeff_best3D(20) << std::endl;
+
+    std::cout << std::endl << "start test-4" << std::endl;
+    iOptimizationTester.clear();
+    iOptimizationTester.add_deal(easy_bo::EASY_BO_WIN);
+    iOptimizationTester.add_deal(easy_bo::EASY_BO_WIN);
+    iOptimizationTester.add_deal(easy_bo::EASY_BO_WIN);
+    iOptimizationTester.add_deal(easy_bo::EASY_BO_WIN);
+    iOptimizationTester.add_deal(easy_bo::EASY_BO_WIN);
+    iOptimizationTester.add_deal(easy_bo::EASY_BO_WIN);
+    iOptimizationTester.add_deal(easy_bo::EASY_BO_LOSS);
+    iOptimizationTester.add_deal(easy_bo::EASY_BO_LOSS);
+    iOptimizationTester.add_deal(easy_bo::EASY_BO_LOSS);
+    iOptimizationTester.add_deal(easy_bo::EASY_BO_LOSS);
+    iOptimizationTester.stop();
+    std::cout << "test-4 winrate coefficient variance: " << iOptimizationTester.get_winrate_coefficient_variance() << std::endl;
+    std::cout << "test-4 winrate: " << iOptimizationTester.get_winrate<float>() << std::endl;
+    std::cout << "test-4 best3D: " << iOptimizationTester.get_coeff_best3D(20) << std::endl;
     return 0;
 }
