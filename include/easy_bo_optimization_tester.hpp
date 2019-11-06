@@ -109,6 +109,7 @@ namespace easy_bo {
          */
         template<const bool is_use_negative = false>
         float get_coeff_best3D(const uint32_t max_amount_deals, const uint32_t revolutions = 1) {
+            if(state.size() == 0) return std::numeric_limits<float>::max();
             float stability = easy_bo::calc_centroid_circle<true, is_use_negative>(state, state.size(), revolutions);
             float winrate = get_winrate<float>();
             float deals = get_deals();

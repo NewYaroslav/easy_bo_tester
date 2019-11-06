@@ -98,5 +98,12 @@ int main() {
     std::cout << "test-4 winrate coefficient variance: " << iOptimizationTester.get_winrate_coefficient_variance() << std::endl;
     std::cout << "test-4 winrate: " << iOptimizationTester.get_winrate<float>() << std::endl;
     std::cout << "test-4 best3D: " << iOptimizationTester.get_coeff_best3D(20) << std::endl;
+    iOptimizationTester.clear();
+    std::cout << std::endl << "start test-5" << std::endl;
+    std::cout << "test-5 winrate: " << iOptimizationTester.get_winrate<float>() << std::endl;
+    std::cout << "test-5 best3D: " << iOptimizationTester.get_coeff_best3D(20) << std::endl;
+    iOptimizationTester.stop();
+    std::cout << "test-5 winrate: " << iOptimizationTester.get_winrate<float>() << std::endl;
+    std::cout << "test-5 best3D: " << iOptimizationTester.get_coeff_best3D(20) << std::endl;
     return 0;
 }
