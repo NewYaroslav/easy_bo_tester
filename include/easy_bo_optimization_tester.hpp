@@ -28,7 +28,7 @@ namespace easy_bo {
         OptimizationTester(const size_t bo_reserve_size = 256) : reserve_size(bo_reserve_size) {
             state.reserve(reserve_size);
             array_equity.reserve(reserve_size);
-            easy_bo::generate_table_sin_cos();
+            easy_bo_math::generate_table_sin_cos();
         };
 
         /** \brief Получить винрейт
@@ -105,15 +105,34 @@ namespace easy_bo {
          * Три оси 3D пространства соответствуют инверсному винрейту, стабильности стратегии (0 - лучшая стабильность), и инверсному количеству сделок.
          * \param max_amount_deals Максимальное количество сделок
          * \param revolutions Количество оборотов окружности, по умолчанию 1. Можно взять 3,5,7 оборота, чтобы исключить влияние  повторяющихся неоднородностей
+         * \param a1 Коэффициент корректировки
+         * \param a2 Коэффициент корректировки
+         * \param b1 Коэффициент корректировки
+         * \param b2 Коэффициент корректировки
+         * \param c1 Коэффициент корректировки
+         * \param c2 Коэффициент корректировки
          * \return коэффициент лучшей стратегии
          */
         template<const bool is_use_negative = false>
-        float get_coeff_best3D(const uint32_t max_amount_deals, const uint32_t revolutions = 1) {
+        float get_coeff_best3D(
+                const uint32_t max_amount_deals,
+                const uint32_t revolutions = 1,
+                const float a1 = 1.0,
+                const float a2 = 1.0,
+                const float b1 = 1.0,
+                const float b2 = 0.0,
+                const float c1 = 1.0,
+                const float c2 = 1.0) {
             if(state.size() == 0) return std::numeric_limits<float>::max();
-            float stability = easy_bo::calc_centroid_circle<true, is_use_negative>(state, state.size(), revolutions);
-            float winrate = get_winrate<float>();
-            float deals = get_deals();
-            return calc_coeff_best3D(winrate, stability, deals, max_amount_deals);
+            const float stability = easy_bo::calc_centroid_circle<true, is_use_negative>(state, state.size(), revolutions);
+            const float winrate = get_winrate<float>();
+            const float deals = get_deals();
+            return calc_coeff_best3D(
+                winrate,
+                stability,
+                deals,
+                max_amount_deals,
+                a1,a2,b1,b2,c1,c2);
         }
 
         /** \brief Очистить состояние тестера
