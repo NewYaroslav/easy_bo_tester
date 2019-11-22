@@ -641,8 +641,8 @@ namespace easy_bo {
          *
          * Данный метод получит винрейт вектора сделок за указанное количество дней. Текущий день не учитывается.
 		 * Также метод отсортирует сделки по времени и удалит те сделки, которые "подсматривают" за последнюю дату.
-         * \param winrate_array Массив винрейтов
-		 * \param symbol_index Индекс символа
+         * \param winrate_array Массив винрейтов нескольких символов
+		 * \param symbols_index Массив индексов символов
 		 * \param start_minute_day Начальная минута дня (включительно)
 		 * \param stop_minute_day Конечная минута дня (не включительно)
 		 * \param days Количество дней
@@ -651,41 +651,59 @@ namespace easy_bo {
 		 * \return Вернет 0 в случае успеха, иначе см. код ошибок в xquotes_common.hpp
          */
 		template<class T>
-		int get_winrate_array(
-				std::vector<std::vector<T>> &winrate_array,
+		int get_winrate_arrays(
+				std::vector<std::vector<T>> &winrate_arrays,
 				const std::vector<uint32_t> &symbols_index,
 				const uint32_t start_minute_day,
 				const uint32_t stop_minute_day,
 				const uint32_t days,
 				const xtime::timestamp_t stop_timestamp,
 				std::function<void(std::vector<Deals> &deals)> callback = nullptr) {
-			std::vector<Deals> list_deals;
+            winrate_arrays.resize(symbols_index.size(),std::vector<T>(days));
+            easy_bo::SimplifedTester<uint32_t> tester;
+            size_t day = 0;
+			std::vector<Deals> list_deals; // не будет использован
 			int err = get_deals_days(
 				list_deals,
-				symbol_index,
-				start_minute_day,
-				stop_minute_day,
 				days,
 				stop_timestamp,
-				callback);
-			if(err != OK) return err;
-			winrate_array.resize(days);
-			easy_bo::SimplifedTester<uint32_t> tester;
-			uint32_t day = xtime::get_day(list_deals[0].timestamp);
-			size_t index = 0;
-			for(size_t i = 0; i < list_deals.size(); ++i) {
-                const uint32_t index_day = xtime::get_day(list_deals[i].timestamp);
-                if(index_day != day) {
-                    winrate_array[index] = tester.get_winrate<T>();
-                    ++index;
-                    tester.clear();
-                    day = index_day;
+				[&](std::vector<Deals> &temp) {
+					/* получаем данные за один день
+					 * и сначала удалим из данных лишние минуты
+					 */
+					size_t temp_index = 0;
+					while(temp_index < temp.size()) {
+						const uint32_t minute_day = xtime::get_minute_day(temp[temp_index].timestamp);
+						if(start_minute_day > minute_day || minute_day >= stop_minute_day) {
+							temp.erase(temp.begin() + temp_index);
+							continue;
+						}
+						++temp_index;
+					}
+					/* далее, если еще что-то осталось от данных,
+					 * вызовем пользователькую функцию фильтра
+					 */
+					if(temp.size() != 0 && callback != nullptr) callback(temp);
+					if(temp.size() != 0) {
+                        /* далее обработаем все символы */
+                        for(size_t symbol_index = 0; symbol_index < symbols_index.size(); ++symbol_index) {
+                            tester.clear();
+                            for(size_t i = 0; i < temp.size(); ++i) {
+                                if(symbol_index != temp[i].symbol) continue;
+                                if(temp[i].result == EASY_BO_WIN) tester.add_deal(easy_bo::EASY_BO_WIN);
+                                else tester.add_deal(easy_bo::EASY_BO_LOSS);
+                            }
+                            winrate_arrays[symbol_index][day] = tester.get_winrate<T>();
+                        }
+                        ++day;
+                    }
+				});
+            if(err == OK) {
+                for(size_t i = 0; i < winrate_arrays.size(); ++i) {
+                    std::reverse(winrate_arrays[i].begin(), winrate_arrays[i].end());
                 }
-				if(list_deals[i].result == EASY_BO_WIN) tester.add_deal(easy_bo::EASY_BO_WIN);
-				else tester.add_deal(easy_bo::EASY_BO_LOSS);
-			}
-			winrate_array[index] = tester.get_winrate<T>();
-			return OK;
+            }
+            return err;
 		}
 
 		/** \brief Получить фиксированное количество сделок

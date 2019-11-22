@@ -24,22 +24,38 @@ int main(int argc, char* argv[]) {
     }
     {
         easy_bo::DealsDataStore iDealsDataStore(path);
+        std::cout << "example #1" << std::endl;
         double winrate = 0.0;
         int err = iDealsDataStore.get_winrate_fixed_number(winrate, 0, 0, xtime::MINUTES_IN_DAY, 100, xtime::get_timestamp(1,1,2012));
         std::cout << "code " << err<< std::endl;
         std::cout << "winrate " << winrate << std::endl;
+
+        std::cout << "example #2" << std::endl;
         err = iDealsDataStore.get_winrate_days(winrate, 0, 0, xtime::MINUTES_IN_DAY, 20, xtime::get_timestamp(1,1,2012));
         std::cout << "code " << err<< std::endl;
         std::cout << "winrate " << winrate << std::endl;
+
+        std::cout << "example #3" << std::endl;
         err = iDealsDataStore.get_winrate_days(winrate, 1, 0, xtime::MINUTES_IN_DAY, 20, xtime::get_timestamp(1,1,2012));
         std::cout << "code " << err<< std::endl;
         std::cout << "winrate " << winrate << std::endl;
 
+        std::cout << "example #4" << std::endl;
         std::vector<float> winrate_array;
         err = iDealsDataStore.get_winrate_array(winrate_array, 0, 0, xtime::MINUTES_IN_DAY, 20, xtime::get_timestamp(1,1,2012));
         std::cout << "code " << err<< std::endl;
         for(size_t i = 0; i < winrate_array.size(); ++i) {
             std::cout << "winrate[" << i << "] " << winrate_array[i] << std::endl;
+        }
+
+        std::cout << "example #5" << std::endl;
+        std::vector<std::vector<float>> winrate_arrays;
+        std::vector<uint32_t> symbols_index = {0,1};
+        err = iDealsDataStore.get_winrate_arrays(winrate_arrays, symbols_index, 0, xtime::MINUTES_IN_DAY, 20, xtime::get_timestamp(1,1,2012));
+        std::cout << "code " << err<< std::endl;
+        for(size_t i = 0; i < winrate_arrays.size(); ++i)
+        for(size_t j = 0; j < winrate_arrays[i].size(); ++j) {
+            std::cout << "winrate[" << i << "][" << j << "] " << winrate_arrays[i][j] << std::endl;
         }
     }
     std::system("pause");
