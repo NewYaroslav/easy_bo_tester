@@ -3,6 +3,35 @@
 #include <random>
 #include <ctime>
 
+double getAverageGeometricYield(std::vector<double> &vMoney) {
+    if(vMoney.size() < 2) return 0;
+    double mx = 1.0;
+    for(int i = 1; i < (int)vMoney.size(); i++) {
+        double ri = vMoney[i - 1] > 0 ? 1.0 + ((double)(vMoney[i] - vMoney[i - 1]) / (double)vMoney[i - 1]) : 0;
+        //double ri = vMoney[i - 1] > 0 ? ((double)vMoney[i] / (double)vMoney[i - 1]) : 0;
+        mx *= ri;
+    }
+    if(mx == 0) return 0;
+    return pow(mx,(1.0/(double)vMoney.size()));
+}
+
+double getCoeffSharpe(std::vector<double> &vMoney) {
+    if(vMoney.size() < 3) return 0;
+    double re = getAverageGeometricYield(vMoney);
+    if(re == 0) return 0;
+    double sum = 0;
+    for(int i = 1; i < (int)vMoney.size(); i++) {
+        double ri = vMoney[i - 1] > 0 ? 1.0 + ((double)(vMoney[i] - vMoney[i - 1]) / (double)vMoney[i - 1]) : 0;
+        //double ri = vMoney[i - 1] > 0 ? ((double)vMoney[i] / (double)vMoney[i - 1]) : 0;
+        double diff = ri - re;
+        sum += diff * diff;
+    }
+    if(sum == 0) return 0;
+    double sigma = (1.0 / (double)(vMoney.size() - 1)) * sqrt(sum);
+    //return sqrt((double)vMoney.size())*(re/sigma);
+    return (re/sigma);
+}
+
 int main() {
     std::cout << "standart tester" << std::endl;
     std::cout << "start test-1" << std::endl;
@@ -29,6 +58,10 @@ int main() {
     for(size_t i = 0; i < equity.size(); ++i) {
         std::cout << "test-1 equity[" << i << "]: " << equity[i] << std::endl;
     }
+    std::vector<double> test_equity1 = iOptimizationTester.get_equity_curve();
+    std::cout << "test-1 getCoeffSharpe: " << getCoeffSharpe(test_equity1) << std::endl;
+    std::cout << "test-1 getAverageGeometricYield: " << getAverageGeometricYield(test_equity1) << std::endl;
+    std::cout << "test-1 calc_geometric_average_return: " << easy_bo::calc_geometric_average_return<double>(test_equity1) << std::endl;
 
     /* Теперь проверим тест с вероятность успешной сделки 56%
      * выплатой 80% и ставкой 3%
@@ -64,6 +97,11 @@ int main() {
     std::cout << "test-2 expected payoff: " << iOptimizationTester.get_expected_payoff(0.8) << std::endl;
     std::cout << "test-2 total net profit: " << iOptimizationTester.get_total_net_profit() << std::endl;
     std::cout << "test-2 fast sharpe ratio: " << iOptimizationTester.get_fast_sharpe_ratio() << std::endl;
+
+    std::vector<double> test_equity = iOptimizationTester.get_equity_curve();
+    std::cout << "test-2 getCoeffSharpe: " << getCoeffSharpe(test_equity) << std::endl;
+    std::cout << "test-2 getAverageGeometricYield: " << getAverageGeometricYield(test_equity) << std::endl;
+    std::cout << "test-2 calc_geometric_average_return: " << easy_bo::calc_geometric_average_return<double>(test_equity) << std::endl;
 
     std::cout << std::endl << "start test-3" << std::endl;
     iOptimizationTester.clear();
@@ -105,5 +143,7 @@ int main() {
     iOptimizationTester.stop();
     std::cout << "test-5 winrate: " << iOptimizationTester.get_winrate<float>() << std::endl;
     std::cout << "test-5 best3D: " << iOptimizationTester.get_coeff_best3D(20) << std::endl;
+
+
     return 0;
 }

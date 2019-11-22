@@ -7,9 +7,9 @@ int main()
 {
     cout << "simplifed tester" << endl;
     easy_bo::SimplifedTester<> iSimplifedTester;
-    iSimplifedTester.add_deal(easy_bo::EASY_BO_BUY);
-    iSimplifedTester.add_deal(easy_bo::EASY_BO_SELL);
-    iSimplifedTester.add_deal(easy_bo::EASY_BO_BUY);
+    iSimplifedTester.add_deal(easy_bo::EASY_BO_WIN);
+    iSimplifedTester.add_deal(easy_bo::EASY_BO_LOSS);
+    iSimplifedTester.add_deal(easy_bo::EASY_BO_WIN);
     cout << "winrate: " << iSimplifedTester.get_winrate<float>() << endl;
     cout << "clear" << endl;
     iSimplifedTester.clear();
