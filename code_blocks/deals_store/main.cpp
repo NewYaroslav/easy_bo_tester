@@ -57,6 +57,35 @@ int main(int argc, char* argv[]) {
         for(size_t j = 0; j < winrate_arrays[i].size(); ++j) {
             std::cout << "winrate[" << i << "][" << j << "] " << winrate_arrays[i][j] << std::endl;
         }
+
+        std::cout << "example #6" << std::endl;
+        err = iDealsDataStore.trade(xtime::get_timestamp(1,1,2010),[&](
+                std::vector<easy_bo::DealsDataStore::Deals> &deals,
+                const xtime::timestamp_t timestamp){
+            std::cout << "update " << xtime::get_str_date_time(timestamp) << std::endl;
+            for(size_t i = 0; i < deals.size(); ++i) {
+                std::cout
+                    << "name " << deals[i].name
+                    << " res: " << (int)deals[i].result
+                    << " t: " << xtime::get_str_date_time(timestamp) << std::endl;
+            }
+        });
+
+        std::cout << "example #7" << std::endl;
+        err = iDealsDataStore.trade(
+                xtime::get_timestamp(1,1,2010),
+                xtime::get_timestamp(10,1,2010),
+                [&](
+                std::vector<easy_bo::DealsDataStore::Deals> &deals,
+                const xtime::timestamp_t timestamp){
+            std::cout << "update " << xtime::get_str_date_time(timestamp) << std::endl;
+            for(size_t i = 0; i < deals.size(); ++i) {
+                std::cout
+                    << "name " << deals[i].name
+                    << " res: " << (int)deals[i].result
+                    << " t: " << xtime::get_str_date_time(timestamp) << std::endl;
+            }
+        });
     }
     std::system("pause");
     return 0;

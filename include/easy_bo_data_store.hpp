@@ -236,6 +236,77 @@ namespace easy_bo {
             return OK;
         }
 
+        /** \brief Получить сделки за указанный торговый день
+         *
+         * \param list_deals Массив сделок
+         * \param timestamp Дата
+         * \param callback Функция для обратного вызова, можно использовать для дополнительной фильтрации сделок
+         * \return Вернет код ошибки
+         */
+        int get_deals(
+                std::vector<Deals> &list_deals,
+                const xtime::timestamp_t timestamp,
+                std::function<void(std::vector<Deals> &deals)> callback = nullptr) {
+            if(!check_timestamp(timestamp)) return easy_bo::NO_DATA_ACCESS;
+            int err = read_deals(list_deals, timestamp);
+            if(err != easy_bo::OK) return err;
+            sort_list_deals(list_deals);
+            if(callback != nullptr) callback(list_deals);
+            if(list_deals.size() == 0) return easy_bo::NO_DATA_ACCESS;
+            return easy_bo::OK;
+        }
+
+        /** \brief Торгуем день
+         *
+         * \param timestamp Дата
+         * \param callback Лямбда-функция для обратного вызова.
+         * Она принимает массивы сделок по метке времени
+         * \param step Шаг времени
+         * \return Код ошибки
+         */
+        int trade(
+                const xtime::timestamp_t timestamp,
+                std::function<void(
+                    std::vector<Deals> &deals,
+                    const xtime::timestamp_t timestamp)> callback,
+                const xtime::timestamp_t step = xtime::SECONDS_IN_MINUTE) {
+            const xtime::timestamp_t start = xtime::get_first_timestamp_day(timestamp);
+            if(!check_timestamp(start)) return easy_bo::NO_DATA_ACCESS;
+            std::vector<Deals> list_deals;
+            int err = read_deals(list_deals, start);
+            if(err != easy_bo::OK) return err;
+            sort_list_deals(list_deals);
+            std::vector<Deals> temp;
+            temp.reserve(list_deals.size());
+            const xtime::timestamp_t stop = start + xtime::SECONDS_IN_DAY;
+            for(xtime::timestamp_t t = start; t < stop; t += step) {
+                /* формируем список для каждой минуты дня */
+                auto it = find_deal(list_deals, t);
+                if(it == list_deals.end()) continue;
+                temp.clear();
+                const size_t offset = it - list_deals.begin();
+                for(size_t i = offset; i < list_deals.size(); ++i) {
+                    if(list_deals[i].timestamp == t) temp.push_back(list_deals[i]);
+                }
+                if(temp.size() > 0) callback(temp, t);
+            }
+            return easy_bo::OK;
+        }
+
+        int trade(
+                const xtime::timestamp_t start_date_timestamp,
+                const xtime::timestamp_t stop_date_timestamp,
+                std::function<void(
+                        std::vector<Deals> &deals,
+                        const xtime::timestamp_t timestamp)> callback,
+                const xtime::timestamp_t step = xtime::SECONDS_IN_MINUTE) {
+            int counter = 0;
+            for(xtime::timestamp_t t = start_date_timestamp; t <= stop_date_timestamp; t += xtime::SECONDS_IN_DAY) {
+                int err = trade(t, callback, step);
+                if(err == easy_bo::OK) ++counter;
+            }
+        }
+
 		/** \brief Получить сделки за указанное количество дней
          *
          * Данный метод загрузит вектор сделок за указанное количество дней. Текущий день не учитывается.
@@ -302,9 +373,10 @@ namespace easy_bo {
 			}
 			if(list_deals.size() == 0) return NO_DATA_ACCESS;
 			/* сортируем данные */
-			std::sort(list_deals.begin(), list_deals.end(), [](const Deals &lhs, const Deals &rhs) {
-                return lhs.timestamp < rhs.timestamp;
-            });
+			sort_list_deals(list_deals);
+			//std::sort(list_deals.begin(), list_deals.end(), [](const Deals &lhs, const Deals &rhs) {
+            //    return lhs.timestamp < rhs.timestamp;
+            //});
 			return OK;
 		}
 
