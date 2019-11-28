@@ -104,6 +104,16 @@ int main(int argc, char* argv[]) {
         for(size_t i = 0; i < list_deals.size(); ++i) {
             if(list_deals[i] != fast_list_deals[i]) std::cout << "error, list_deals[i] != fast_list_deals[i]" << std::endl;
         }
+
+        std::cout << "example #9" << std::endl;
+        const uint32_t days = 5;
+        uint32_t day = 0;
+        iFastDealsDataStore.process_few_days_reverse(xtime::get_timestamp(1,1,2012),[&](std::vector<easy_bo::OneDealStruct> &deals)->bool{
+            if(deals.size() == 0) return true;
+            std::cout << "deals: " << deals.size() << " day: " << day++ << std::endl;
+            if(day >= days) return false;
+            return true;
+        });
     }
     std::system("pause");
     return 0;

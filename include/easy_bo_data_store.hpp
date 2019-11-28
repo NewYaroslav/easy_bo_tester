@@ -343,6 +343,54 @@ namespace easy_bo {
             }
         }
 
+        /** \brief Обработать сделки за несколько дней
+         *
+		 * Метод удалит те сделки, которые "подсматривают" за последнюю дату.
+         * \param stop_timestamp Конечная дата
+		 * \param callback Функция для обратного вызова, можно использовать для дополнительной фильтрации сделок
+		 * \return Вернет 0 в случае успеха, иначе см. код ошибок в xquotes_common.hpp
+         */
+		int process_few_days_reverse(
+				const xtime::timestamp_t stop_timestamp,
+				std::function<bool(std::vector<Deal> &deals)> callback) {
+			xtime::timestamp_t min_timestamp = 0;
+			xtime::timestamp_t max_timestamp = 0;
+			int err = get_min_max_timestamp(min_timestamp, max_timestamp);
+			if(err != xquotes_common::OK) return err;
+			xtime::timestamp_t timestamp = xtime::get_first_timestamp_day(stop_timestamp) - xtime::SECONDS_IN_DAY;
+			const xtime::timestamp_t protection_timestamp = xtime::get_last_timestamp_day(timestamp);
+			while(timestamp >= min_timestamp) {
+				/* проверяем доступность данных за требуемую дату */
+				if(!check_timestamp(timestamp)) {
+					timestamp -= xtime::SECONDS_IN_DAY;
+					continue;
+				}
+				/* загружаем данные за торговый день */
+				std::vector<Deal> temp;
+				err = read_deals<STORAGE_TYPE>(temp, timestamp);
+				if(err != xquotes_common::OK) {
+					timestamp -= xtime::SECONDS_IN_DAY;
+					continue;
+				}
+				/* удаляем те сделки, которые выходят
+				 * за максимально допустимую дату
+				 */
+				size_t temp_index = 0;
+				while(temp_index < temp.size()) {
+					const xtime::timestamp_t last_timestamp =
+						temp[temp_index].timestamp + temp[temp_index].duration;
+					if(last_timestamp > protection_timestamp) {
+						temp.erase(temp.begin() + temp_index);
+						continue;
+					}
+					++temp_index;
+				}
+				if(!callback(temp)) break;
+				timestamp -= xtime::SECONDS_IN_DAY;
+			}
+			return OK;
+		}
+
 		/** \brief Получить сделки за указанное количество дней
          *
          * Данный метод загрузит вектор сделок за указанное количество дней. Текущий день не учитывается.
