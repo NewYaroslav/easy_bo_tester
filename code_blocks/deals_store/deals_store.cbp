@@ -56,9 +56,16 @@
 		</Compiler>
 		<Unit filename="../../include/easy_bo_common.hpp" />
 		<Unit filename="../../include/easy_bo_data_store.hpp" />
+		<Unit filename="../../include/easy_bo_fast_storage.hpp" />
 		<Unit filename="../../include/easy_bo_simplifed_tester.hpp" />
 		<Unit filename="../../include/easy_bo_standard_tester.hpp" />
 		<Unit filename="../../lib/easy_plot_cpp/include/easy_plot.hpp" />
+		<Unit filename="../../lib/xquotes_history/include/xquotes_daily_data_storage.hpp" />
+		<Unit filename="../../lib/xquotes_history/include/xquotes_files.hpp" />
+		<Unit filename="../../lib/xquotes_history/include/xquotes_history.hpp" />
+		<Unit filename="../../lib/xquotes_history/include/xquotes_json_storage.hpp" />
+		<Unit filename="../../lib/xquotes_history/include/xquotes_parameter_array_storage.hpp" />
+		<Unit filename="../../lib/xquotes_history/include/xquotes_storage.hpp" />
 		<Unit filename="../../lib/xtechnical_analysis/include/xtechnical_indicators.hpp" />
 		<Unit filename="../../lib/xtime_cpp/src/xtime.cpp" />
 		<Unit filename="../../lib/xtime_cpp/src/xtime.hpp" />

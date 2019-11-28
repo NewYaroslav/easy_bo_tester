@@ -6,6 +6,7 @@
 int main(int argc, char* argv[]) {
     /* инициализируем хранилище котировок */
     std::string path = "test.dat";
+    std::string fast_store_path = "test2.dat";
     if(0) {
         /* инициализируем генератор случайных чисел */
         std::mt19937 gen;
@@ -13,36 +14,43 @@ int main(int argc, char* argv[]) {
         std::uniform_int_distribution<> denominator(0, 1000);
 
         easy_bo::DealsDataStore iDealsDataStore(path);
+        easy_bo::FastDealsDataStore iFastDealsDataStore(fast_store_path);
         size_t deals = 0;
         for(xtime::timestamp_t t = xtime::get_timestamp(1,1,2010); t <= xtime::get_timestamp(1,1,2012); t += xtime::SECONDS_IN_HOUR) {
             double p = (double)denominator(gen)/1000.0;
-            if(p <= 0.6) iDealsDataStore.add_deals("EURUSD", 0, 0, easy_bo::EASY_BO_BUY, easy_bo::EASY_BO_WIN, 180, t);
-            else iDealsDataStore.add_deals("EURUSD", 0, 0, easy_bo::EASY_BO_BUY, easy_bo::EASY_BO_LOSS, 180, t);
+            if(p <= 0.6) {
+                iFastDealsDataStore.add_deals("EURUSD", 0, 0, easy_bo::EASY_BO_BUY, easy_bo::EASY_BO_WIN, 180, t);
+                iDealsDataStore.add_deals("EURUSD", 0, 0, easy_bo::EASY_BO_BUY, easy_bo::EASY_BO_WIN, 180, t);
+            } else {
+                iFastDealsDataStore.add_deals("EURUSD", 0, 0, easy_bo::EASY_BO_BUY, easy_bo::EASY_BO_LOSS, 180, t);
+                iDealsDataStore.add_deals("EURUSD", 0, 0, easy_bo::EASY_BO_BUY, easy_bo::EASY_BO_LOSS, 180, t);
+            }
             ++deals;
         }
         std::cout << "deals " << deals << std::endl;
     }
     {
         easy_bo::DealsDataStore iDealsDataStore(path);
+        easy_bo::FastDealsDataStore iFastDealsDataStore(fast_store_path);
         std::cout << "example #1" << std::endl;
         double winrate = 0.0;
-        int err = iDealsDataStore.get_winrate_fixed_number(winrate, 0, 0, xtime::MINUTES_IN_DAY, 100, xtime::get_timestamp(1,1,2012));
+        int err = iFastDealsDataStore.get_winrate_fixed_number(winrate, 0, 0, xtime::MINUTES_IN_DAY, 100, xtime::get_timestamp(1,1,2012));
         std::cout << "code " << err<< std::endl;
         std::cout << "winrate " << winrate << std::endl;
 
         std::cout << "example #2" << std::endl;
-        err = iDealsDataStore.get_winrate_days(winrate, 0, 0, xtime::MINUTES_IN_DAY, 20, xtime::get_timestamp(1,1,2012));
+        err = iFastDealsDataStore.get_winrate_days(winrate, 0, 0, xtime::MINUTES_IN_DAY, 20, xtime::get_timestamp(1,1,2012));
         std::cout << "code " << err<< std::endl;
         std::cout << "winrate " << winrate << std::endl;
 
         std::cout << "example #3" << std::endl;
-        err = iDealsDataStore.get_winrate_days(winrate, 1, 0, xtime::MINUTES_IN_DAY, 20, xtime::get_timestamp(1,1,2012));
+        err = iFastDealsDataStore.get_winrate_days(winrate, 1, 0, xtime::MINUTES_IN_DAY, 20, xtime::get_timestamp(1,1,2012));
         std::cout << "code " << err<< std::endl;
         std::cout << "winrate " << winrate << std::endl;
 
         std::cout << "example #4" << std::endl;
         std::vector<float> winrate_array;
-        err = iDealsDataStore.get_winrate_array(winrate_array, 0, 0, xtime::MINUTES_IN_DAY, 20, xtime::get_timestamp(1,1,2012));
+        err = iFastDealsDataStore.get_winrate_array(winrate_array, 0, 0, xtime::MINUTES_IN_DAY, 20, xtime::get_timestamp(1,1,2012));
         std::cout << "code " << err<< std::endl;
         for(size_t i = 0; i < winrate_array.size(); ++i) {
             std::cout << "winrate[" << i << "] " << winrate_array[i] << std::endl;
@@ -51,7 +59,7 @@ int main(int argc, char* argv[]) {
         std::cout << "example #5" << std::endl;
         std::vector<std::vector<float>> winrate_arrays;
         std::vector<uint32_t> symbols_index = {0,1};
-        err = iDealsDataStore.get_winrate_arrays(winrate_arrays, symbols_index, 0, xtime::MINUTES_IN_DAY, 20, xtime::get_timestamp(1,1,2012));
+        err = iFastDealsDataStore.get_winrate_arrays(winrate_arrays, symbols_index, 0, xtime::MINUTES_IN_DAY, 20, xtime::get_timestamp(1,1,2012));
         std::cout << "code " << err<< std::endl;
         for(size_t i = 0; i < winrate_arrays.size(); ++i)
         for(size_t j = 0; j < winrate_arrays[i].size(); ++j) {
@@ -59,8 +67,8 @@ int main(int argc, char* argv[]) {
         }
 
         std::cout << "example #6" << std::endl;
-        err = iDealsDataStore.trade(xtime::get_timestamp(1,1,2010),[&](
-                std::vector<easy_bo::DealsDataStore::Deals> &deals,
+        err = iFastDealsDataStore.trade(xtime::get_timestamp(1,1,2010),[&](
+                std::vector<easy_bo::DealsDataStore::Deal> &deals,
                 const xtime::timestamp_t timestamp){
             std::cout << "update " << xtime::get_str_date_time(timestamp) << std::endl;
             for(size_t i = 0; i < deals.size(); ++i) {
@@ -72,11 +80,11 @@ int main(int argc, char* argv[]) {
         });
 
         std::cout << "example #7" << std::endl;
-        err = iDealsDataStore.trade(
+        err = iFastDealsDataStore.trade(
                 xtime::get_timestamp(1,1,2010),
-                xtime::get_timestamp(10,1,2010),
+                xtime::get_timestamp(2,1,2010),
                 [&](
-                std::vector<easy_bo::DealsDataStore::Deals> &deals,
+                std::vector<easy_bo::DealsDataStore::Deal> &deals,
                 const xtime::timestamp_t timestamp){
             std::cout << "update " << xtime::get_str_date_time(timestamp) << std::endl;
             for(size_t i = 0; i < deals.size(); ++i) {
@@ -86,6 +94,16 @@ int main(int argc, char* argv[]) {
                     << " t: " << xtime::get_str_date_time(timestamp) << std::endl;
             }
         });
+
+        std::cout << "example #8" << std::endl;
+        std::vector<easy_bo::OneDealStruct> list_deals;
+        std::vector<easy_bo::OneDealStruct> fast_list_deals;
+        iDealsDataStore.get_deals_days(list_deals, 5, xtime::get_timestamp(1,1,2012));
+        iFastDealsDataStore.get_deals_days(fast_list_deals, 5, xtime::get_timestamp(1,1,2012));
+        if(list_deals.size() != fast_list_deals.size()) std::cout << "error, list_deals.size() != fast_list_deals.size()" << std::endl;
+        for(size_t i = 0; i < list_deals.size(); ++i) {
+            if(list_deals[i] != fast_list_deals[i]) std::cout << "error, list_deals[i] != fast_list_deals[i]" << std::endl;
+        }
     }
     std::system("pause");
     return 0;

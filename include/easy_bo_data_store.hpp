@@ -26,22 +26,26 @@
 
 #include "easy_bo_common.hpp"
 #include "easy_bo_simplifed_tester.hpp"
+#include "easy_bo_fast_storage.hpp"
 #include "xquotes_json_storage.hpp"
 #include "xtime.hpp"
 #include <vector>
 #include <algorithm>
 #include <limits>
+#include <type_traits>
 
 namespace easy_bo {
 
 	/** \brief Класс хранилища сделок
 	 */
-	class DealsDataStore {
+    template<class STORAGE_TYPE = xquotes_json_storage::JsonStorage>
+	class DealsDataStoreTemplate {
 	public:
 
+#if(0)
 		/** \brief Класс для хранения сделки
 		 */
-		class Deals {
+		class Deal {
 		public:
 			xtime::timestamp_t timestamp = 0;   /**< Метка времени начала бинарного опицона */
 			uint32_t duration = 0;              /**< Продолжительность бинарного опциона в секундах */
@@ -50,9 +54,9 @@ namespace easy_bo {
 			uint8_t group = 0;					/**< Группа сделок */
 			uint8_t symbol = 0;					/**< Индекс символа */
 			std::string name;					/**< Имя символа */
-			Deals() {};
+			Deal() {};
 
-			bool operator == (const Deals &b) {
+			bool operator == (const Deal &b) {
 				return ( timestamp == b.timestamp &&
                     duration == b.duration &&
                     direction == b.direction &&
@@ -62,10 +66,12 @@ namespace easy_bo {
                     name == b.name);
 			}
 		};
+#endif
+    typedef OneDealStruct Deal;
 
 	private:
-		std::vector<Deals> list_write_deals;	/**< Массив сделок */
-		xquotes_json_storage::JsonStorage iStorage;	/**< Хранилище JSON данных, разбитых по дням */
+		std::vector<Deal> list_write_deals;	/**< Массив сделок */
+		STORAGE_TYPE iStorage;	                /**< Хранилище данных сделок, разбитых по дням */
         xtime::timestamp_t date_timestamp = 0;  /**< Метка времени начала исторических данных */
 
 		/** \brief Записать сделки за один торговый день
@@ -73,10 +79,11 @@ namespace easy_bo {
          * \param timestamp Метка времени
          * \return Вернет 0 в случае успеха
          */
-        int write_deals(const std::vector<Deals> &list_deals, const xtime::timestamp_t timestamp) {
+        template<typename T, typename std::enable_if<std::is_same<T, xquotes_json_storage::JsonStorage>::value>::type* = nullptr>
+        int write_deals(const std::vector<Deal> &list_deals, const xtime::timestamp_t timestamp) {
             nlohmann::json j;
             for(size_t i = 0; i < list_deals.size(); ++i) {
-                j[i]["name"] = list_deals[i].name;
+                j[i]["name"] = list_deals[i].get_name();
                 j[i]["symbol"] = list_deals[i].symbol;
                 j[i]["result"] = list_deals[i].result;
                 j[i]["direction"] = list_deals[i].direction;
@@ -87,12 +94,25 @@ namespace easy_bo {
             return iStorage.write_json(j, xtime::get_first_timestamp_day(timestamp));
         }
 
+        /** \brief Записать сделки за один торговый день
+         * \param list_deals Список сделок
+         * \param timestamp Метка времени
+         * \return Вернет 0 в случае успеха
+         */
+        template<typename T, typename std::enable_if<std::is_same<T, ArrayDealsStorage>::value>::type* = nullptr>
+        int write_deals(const std::vector<Deal> &list_deals, const xtime::timestamp_t timestamp) {
+            ArrayDeals iArrayDeals;
+            iArrayDeals.set_vector(list_deals);
+            return iStorage.write_day_data(iArrayDeals, xtime::get_first_timestamp_day(timestamp));
+        }
+
 		/** \brief Прочитать сделки за торговый день
          * \param list_deals Массив сделок
          * \param timestamp Метка времени
          * \return Вернет 0 в случае успеха
          */
-        int read_deals(std::vector<Deals> &list_deals, const xtime::timestamp_t timestamp) {
+        template<typename T, typename std::enable_if<std::is_same<T, xquotes_json_storage::JsonStorage>::value>::type* = nullptr>
+        int read_deals(std::vector<Deal> &list_deals, const xtime::timestamp_t timestamp) {
             list_deals.clear();
             nlohmann::json j;
             try {
@@ -100,7 +120,8 @@ namespace easy_bo {
                 if(err != xquotes_common::OK) return err;
                 list_deals.resize(j.size());
                 for(size_t i = 0; i < list_deals.size(); ++i) {
-                    list_deals[i].name = j[i]["name"];
+                    std::string name = j[i]["name"];
+                    list_deals[i].set_name(name);
                     list_deals[i].symbol = j[i]["symbol"];
                     list_deals[i].result = j[i]["result"];
                     list_deals[i].direction = j[i]["direction"];
@@ -115,15 +136,30 @@ namespace easy_bo {
             return OK;
         }
 
+        /** \brief Прочитать сделки за торговый день
+         * \param list_deals Массив сделок
+         * \param timestamp Метка времени
+         * \return Вернет 0 в случае успеха
+         */
+        template<typename T, typename std::enable_if<std::is_same<T, ArrayDealsStorage>::value>::type* = nullptr>
+        int read_deals(std::vector<Deal> &list_deals, const xtime::timestamp_t timestamp) {
+            list_deals.clear();
+            ArrayDeals iArrayDeals;
+            int err = iStorage.get_day_data(iArrayDeals, xtime::get_first_timestamp_day(timestamp));
+            if(err != xquotes_common::OK) return err;
+            iArrayDeals.get_vector(list_deals);
+            return OK;
+        }
+
 		/** \brief Сортировка массива сделок
          */
-        void sort_list_deals(std::vector<Deals> &list_deals) {
+        void sort_list_deals(std::vector<Deal> &list_deals) {
             if(!std::is_sorted(list_deals.begin(), list_deals.end(),
-                [](const Deals &a, const Deals &b) {
+                [](const Deal &a, const Deal &b) {
                         return a.timestamp < b.timestamp;
                     })) {
                 std::sort(list_deals.begin(), list_deals.end(),
-                [](const Deals &a, const Deals &b) {
+                [](const Deal &a, const Deal &b) {
                     return a.timestamp < b.timestamp;
                 });
             }
@@ -132,13 +168,13 @@ namespace easy_bo {
 		/** \brief Найти сделку по метке времени
          * \return указатель на сделку с похожей меткой времени
          */
-        typename std::vector<Deals>::iterator find_deal(std::vector<Deals> &list_deals, const xtime::timestamp_t timestamp) {
+        typename std::vector<Deal>::iterator find_deal(std::vector<Deal> &list_deals, const xtime::timestamp_t timestamp) {
             if(list_deals.size() == 0) return list_deals.end();
             auto list_deals_it = std::lower_bound(
                 list_deals.begin(),
                 list_deals.end(),
                 timestamp,
-                [](const Deals &lhs, const xtime::timestamp_t &timestamp) {
+                [](const Deal &lhs, const xtime::timestamp_t &timestamp) {
                 return lhs.timestamp < timestamp;
             });
             if(list_deals_it == list_deals.end()) {
@@ -150,7 +186,7 @@ namespace easy_bo {
             return list_deals.end();
         }
 
-		bool check_repeat_deal(std::vector<Deals> &list_deals, const Deals &deal) {
+		bool check_repeat_deal(std::vector<Deal> &list_deals, const Deal &deal) {
 			auto it = find_deal(list_deals, deal.timestamp);
 			if(it == list_deals.end()) return false;
 			const size_t start_offset = it - list_deals.begin();
@@ -165,7 +201,7 @@ namespace easy_bo {
 		/** \brief Инициализировать базу данных новостей
          * \param _path путь к базе данных
          */
-        DealsDataStore(const std::string &path) : iStorage(path) {};
+        DealsDataStoreTemplate(const std::string &path) : iStorage(path) {};
 
 		/** \brief Проверить наличие новостей за торговый день по метке времени
          * \param timestamp метка времени
@@ -206,8 +242,8 @@ namespace easy_bo {
         int save() {
 			if(list_write_deals.size() > 0 && date_timestamp != 0) {
 				/* данные уже есть! Придется сначала прочитать старые данные */
-				std::vector<Deals> temp;
-				int err = read_deals(temp, date_timestamp);
+				std::vector<Deal> temp;
+				int err = read_deals<STORAGE_TYPE>(temp, date_timestamp);
 				if(err != xquotes_common::OK) {
 					iStorage.save();
 					return err;
@@ -226,7 +262,7 @@ namespace easy_bo {
 					if(temp.size() > 0) sort_list_deals(temp);
 				}
 				/* а теперь все обратно запишем */
-				err = write_deals(temp, date_timestamp);
+				err = write_deals<STORAGE_TYPE>(temp, date_timestamp);
 				if(err != xquotes_common::OK) {
 					iStorage.save();
 					return err;
@@ -244,9 +280,9 @@ namespace easy_bo {
          * \return Вернет код ошибки
          */
         int get_deals(
-                std::vector<Deals> &list_deals,
+                std::vector<Deal> &list_deals,
                 const xtime::timestamp_t timestamp,
-                std::function<void(std::vector<Deals> &deals)> callback = nullptr) {
+                std::function<void(std::vector<Deal> &deals)> callback = nullptr) {
             if(!check_timestamp(timestamp)) return easy_bo::NO_DATA_ACCESS;
             int err = read_deals(list_deals, timestamp);
             if(err != easy_bo::OK) return err;
@@ -267,16 +303,16 @@ namespace easy_bo {
         int trade(
                 const xtime::timestamp_t timestamp,
                 std::function<void(
-                    std::vector<Deals> &deals,
+                    std::vector<Deal> &deals,
                     const xtime::timestamp_t timestamp)> callback,
                 const xtime::timestamp_t step = xtime::SECONDS_IN_MINUTE) {
             const xtime::timestamp_t start = xtime::get_first_timestamp_day(timestamp);
             if(!check_timestamp(start)) return easy_bo::NO_DATA_ACCESS;
-            std::vector<Deals> list_deals;
-            int err = read_deals(list_deals, start);
+            std::vector<Deal> list_deals;
+            int err = read_deals<STORAGE_TYPE>(list_deals, start);
             if(err != easy_bo::OK) return err;
             sort_list_deals(list_deals);
-            std::vector<Deals> temp;
+            std::vector<Deal> temp;
             temp.reserve(list_deals.size());
             const xtime::timestamp_t stop = start + xtime::SECONDS_IN_DAY;
             for(xtime::timestamp_t t = start; t < stop; t += step) {
@@ -297,7 +333,7 @@ namespace easy_bo {
                 const xtime::timestamp_t start_date_timestamp,
                 const xtime::timestamp_t stop_date_timestamp,
                 std::function<void(
-                        std::vector<Deals> &deals,
+                        std::vector<Deal> &deals,
                         const xtime::timestamp_t timestamp)> callback,
                 const xtime::timestamp_t step = xtime::SECONDS_IN_MINUTE) {
             int counter = 0;
@@ -318,10 +354,10 @@ namespace easy_bo {
 		 * \return Вернет 0 в случае успеха, иначе см. код ошибок в xquotes_common.hpp
          */
 		int get_deals_days(
-				std::vector<Deals> &list_deals,
+				std::vector<Deal> &list_deals,
 				const uint32_t days,
 				const xtime::timestamp_t stop_timestamp,
-				std::function<void(std::vector<Deals> &deals)> callback = nullptr) {
+				std::function<void(std::vector<Deal> &deals)> callback = nullptr) {
 			list_deals.clear();
 			xtime::timestamp_t min_timestamp = 0;
 			xtime::timestamp_t max_timestamp = 0;
@@ -337,8 +373,8 @@ namespace easy_bo {
 					continue;
 				}
 				/* загружаем данные за торговый день */
-				std::vector<Deals> temp;
-				err = read_deals(temp, timestamp);
+				std::vector<Deal> temp;
+				err = read_deals<STORAGE_TYPE>(temp, timestamp);
 				if(err != xquotes_common::OK) {
 					timestamp -= xtime::SECONDS_IN_DAY;
 					continue;
@@ -374,9 +410,6 @@ namespace easy_bo {
 			if(list_deals.size() == 0) return NO_DATA_ACCESS;
 			/* сортируем данные */
 			sort_list_deals(list_deals);
-			//std::sort(list_deals.begin(), list_deals.end(), [](const Deals &lhs, const Deals &rhs) {
-            //    return lhs.timestamp < rhs.timestamp;
-            //});
 			return OK;
 		}
 
@@ -394,18 +427,18 @@ namespace easy_bo {
 		 * \return Вернет 0 в случае успеха, иначе см. код ошибок в xquotes_common.hpp
          */
 		int get_deals_days(
-				std::vector<Deals> &list_deals,
+				std::vector<Deal> &list_deals,
 				const uint32_t symbol_index,
 				const uint32_t start_minute_day,
 				const uint32_t stop_minute_day,
 				const uint32_t days,
 				const xtime::timestamp_t stop_timestamp,
-				std::function<void(std::vector<Deals> &deals)> callback = nullptr) {
+				std::function<void(std::vector<Deal> &deals)> callback = nullptr) {
 			return get_deals_days(
 				list_deals,
 				days,
 				stop_timestamp,
-				[&](std::vector<Deals> &temp) {
+				[&](std::vector<Deal> &temp) {
 					/* удаляем ненужные данные */
 					size_t temp_index = 0;
 					while(temp_index < temp.size()) {
@@ -438,22 +471,22 @@ namespace easy_bo {
 		 * \return Вернет 0 в случае успеха, иначе см. код ошибок в xquotes_common.hpp
          */
 		int get_deals_days(
-				std::vector<Deals> &list_deals,
+				std::vector<Deal> &list_deals,
 				const std::string &symbol_name,
 				const uint32_t start_minute_day,
 				const uint32_t stop_minute_day,
 				const uint32_t days,
 				const xtime::timestamp_t stop_timestamp,
-				std::function<void(std::vector<Deals> &deals)> callback = nullptr) {
+				std::function<void(std::vector<Deal> &deals)> callback = nullptr) {
 			return get_deals_days(
 				list_deals,
 				days,
 				stop_timestamp,
-				[&](std::vector<Deals> &temp) {
+				[&](std::vector<Deal> &temp) {
 					/* удаляем ненужные данные */
 					size_t temp_index = 0;
 					while(temp_index < temp.size()) {
-						if(symbol_name != temp[temp_index].name) {
+						if(symbol_name != temp[temp_index].get_name()) {
 							temp.erase(temp.begin() + temp_index);
 							continue;
 						}
@@ -481,17 +514,17 @@ namespace easy_bo {
 		 * \return Вернет 0 в случае успеха, иначе см. код ошибок в xquotes_common.hpp
          */
 		int get_deals_days(
-				std::vector<Deals> &list_deals,
+				std::vector<Deal> &list_deals,
 				const uint32_t start_minute_day,
 				const uint32_t stop_minute_day,
 				const uint32_t days,
 				const xtime::timestamp_t stop_timestamp,
-				std::function<void(std::vector<Deals> &deals)> callback = nullptr) {
+				std::function<void(std::vector<Deal> &deals)> callback = nullptr) {
 			return get_deals_days(
 				list_deals,
 				days,
 				stop_timestamp,
-				[&](std::vector<Deals> &temp) {
+				[&](std::vector<Deal> &temp) {
 					/* удаляем ненужные данные */
 					size_t temp_index = 0;
 					while(temp_index < temp.size()) {
@@ -521,9 +554,9 @@ namespace easy_bo {
 				T &winrate,
 				const uint32_t days,
 				const xtime::timestamp_t stop_timestamp,
-				std::function<void(std::vector<Deals> &deals)> callback = nullptr) {
+				std::function<void(std::vector<Deal> &deals)> callback = nullptr) {
 			winrate = 0;
-			std::vector<Deals> list_deals;
+			std::vector<Deal> list_deals;
 			int err = get_deals_days(list_deals, days, stop_timestamp, callback);
 			if(err != OK) return err;
 			easy_bo::SimplifedTester<uint32_t> tester;
@@ -554,9 +587,9 @@ namespace easy_bo {
 				const uint32_t stop_minute_day,
 				const uint32_t days,
 				const xtime::timestamp_t stop_timestamp,
-				std::function<void(std::vector<Deals> &deals)> callback = nullptr) {
+				std::function<void(std::vector<Deal> &deals)> callback = nullptr) {
 			winrate = 0;
-			std::vector<Deals> list_deals;
+			std::vector<Deal> list_deals;
 			int err = get_deals_days(
 				list_deals,
 				start_minute_day,
@@ -595,9 +628,9 @@ namespace easy_bo {
 				const uint32_t stop_minute_day,
 				const uint32_t days,
 				const xtime::timestamp_t stop_timestamp,
-				std::function<void(std::vector<Deals> &deals)> callback = nullptr) {
+				std::function<void(std::vector<Deal> &deals)> callback = nullptr) {
 			winrate = 0;
-			std::vector<Deals> list_deals;
+			std::vector<Deal> list_deals;
 			int err = get_deals_days(
 				list_deals,
 				symbol_index,
@@ -637,9 +670,9 @@ namespace easy_bo {
 				const uint32_t stop_minute_day,
 				const uint32_t days,
 				const xtime::timestamp_t stop_timestamp,
-				std::function<void(std::vector<Deals> &deals)> callback = nullptr) {
+				std::function<void(std::vector<Deal> &deals)> callback = nullptr) {
 			winrate = 0;
-			std::vector<Deals> list_deals;
+			std::vector<Deal> list_deals;
 			int err = get_deals_days(
 				list_deals,
 				symbol_name,
@@ -679,8 +712,8 @@ namespace easy_bo {
 				const uint32_t stop_minute_day,
 				const uint32_t days,
 				const xtime::timestamp_t stop_timestamp,
-				std::function<void(std::vector<Deals> &deals)> callback = nullptr) {
-			std::vector<Deals> list_deals;
+				std::function<void(std::vector<Deal> &deals)> callback = nullptr) {
+			std::vector<Deal> list_deals;
 			int err = get_deals_days(
 				list_deals,
 				symbol_index,
@@ -730,16 +763,16 @@ namespace easy_bo {
 				const uint32_t stop_minute_day,
 				const uint32_t days,
 				const xtime::timestamp_t stop_timestamp,
-				std::function<void(std::vector<Deals> &deals)> callback = nullptr) {
+				std::function<void(std::vector<Deal> &deals)> callback = nullptr) {
             winrate_arrays.resize(symbols_index.size(),std::vector<T>(days));
             easy_bo::SimplifedTester<uint32_t> tester;
             size_t day = 0;
-			std::vector<Deals> list_deals; // не будет использован
+			std::vector<Deal> list_deals; // не будет использован
 			int err = get_deals_days(
 				list_deals,
 				days,
 				stop_timestamp,
-				[&](std::vector<Deals> &temp) {
+				[&](std::vector<Deal> &temp) {
 					/* получаем данные за один день
 					 * и сначала удалим из данных лишние минуты
 					 */
@@ -789,10 +822,10 @@ namespace easy_bo {
 		 * \return Вернет 0 в случае успеха, иначе см. код ошибок в xquotes_common.hpp
          */
 		int get_fixed_number_deals(
-				std::vector<Deals> &list_deals,
+				std::vector<Deal> &list_deals,
 				const uint32_t number_deals,
 				const xtime::timestamp_t stop_timestamp,
-				std::function<void(std::vector<Deals> &deals)> callback = nullptr) {
+				std::function<void(std::vector<Deal> &deals)> callback = nullptr) {
 			list_deals.clear();
 			xtime::timestamp_t min_timestamp = 0;
 			xtime::timestamp_t max_timestamp = 0;
@@ -806,13 +839,15 @@ namespace easy_bo {
 					timestamp -= xtime::SECONDS_IN_DAY;
 					continue;
 				}
+
 				/* загружаем данные за торговый день */
-				std::vector<Deals> temp;
-				err = read_deals(temp, timestamp);
+				std::vector<Deal> temp;
+				err = read_deals<STORAGE_TYPE>(temp, timestamp);
 				if(err != xquotes_common::OK) {
 					timestamp -= xtime::SECONDS_IN_DAY;
 					continue;
 				}
+
 				/* обрабатываем данные */
 				size_t temp_index = 0;
 				while(temp_index < temp.size()) {
@@ -837,7 +872,7 @@ namespace easy_bo {
 				return NO_DATA_ACCESS;
 			}
 			/* сортируем данные */
-			std::sort(list_deals.begin(), list_deals.end(), [](const Deals &lhs, const Deals &rhs) {
+			std::sort(list_deals.begin(), list_deals.end(), [](const Deal &lhs, const Deal &rhs) {
                 return lhs.timestamp < rhs.timestamp;
             });
 			if(list_deals.size() != number_deals) {
@@ -861,18 +896,18 @@ namespace easy_bo {
 		 * \return Вернет 0 в случае успеха, иначе см. код ошибок в xquotes_common.hpp
          */
 		int get_fixed_number_deals(
-				std::vector<Deals> &list_deals,
+				std::vector<Deal> &list_deals,
 				const uint32_t symbol_index,
 				const uint32_t start_minute_day,
 				const uint32_t stop_minute_day,
 				const uint32_t number_deals,
 				const xtime::timestamp_t stop_timestamp,
-				std::function<void(std::vector<Deals> &deals)> callback = nullptr) {
+				std::function<void(std::vector<Deal> &deals)> callback = nullptr) {
 			return get_fixed_number_deals(
 				list_deals,
 				number_deals,
 				stop_timestamp,
-				[&](std::vector<Deals> &temp) {
+				[&](std::vector<Deal> &temp) {
 					/* удаляем ненужные данные */
 					size_t temp_index = 0;
 					while(temp_index < temp.size()) {
@@ -905,22 +940,22 @@ namespace easy_bo {
 		 * \return Вернет 0 в случае успеха, иначе см. код ошибок в xquotes_common.hpp
          */
 		int get_fixed_number_deals(
-				std::vector<Deals> &list_deals,
+				std::vector<Deal> &list_deals,
 				const std::string &symbol_name,
 				const uint32_t start_minute_day,
 				const uint32_t stop_minute_day,
 				const uint32_t number_deals,
 				const xtime::timestamp_t stop_timestamp,
-				std::function<void(std::vector<Deals> &deals)> callback = nullptr) {
+				std::function<void(std::vector<Deal> &deals)> callback = nullptr) {
 			return get_fixed_number_deals(
 				list_deals,
 				number_deals,
 				stop_timestamp,
-				[&](std::vector<Deals> &temp) {
+				[&](std::vector<Deal> &temp) {
 					/* удаляем ненужные данные */
 					size_t temp_index = 0;
 					while(temp_index < temp.size()) {
-						if(symbol_name != temp[temp_index].name) {
+						if(symbol_name != temp[temp_index].get_name()) {
 							temp.erase(temp.begin() + temp_index);
 							continue;
 						}
@@ -950,9 +985,9 @@ namespace easy_bo {
 				T &winrate,
 				const uint32_t number_deals,
 				const xtime::timestamp_t stop_timestamp,
-				std::function<void(std::vector<Deals> &deals)> callback = nullptr) {
+				std::function<void(std::vector<Deal> &deals)> callback = nullptr) {
 			winrate = 0;
-			std::vector<Deals> list_deals;
+			std::vector<Deal> list_deals;
 			int err = get_fixed_number_deals(list_deals, number_deals, stop_timestamp, callback);
 			if(err != OK) return err;
 			easy_bo::SimplifedTester<uint32_t> tester;
@@ -985,9 +1020,9 @@ namespace easy_bo {
 				const uint32_t stop_minute_day,
 				const uint32_t number_deals,
 				const xtime::timestamp_t stop_timestamp,
-				std::function<void(std::vector<Deals> &deals)> callback = nullptr) {
+				std::function<void(std::vector<Deal> &deals)> callback = nullptr) {
 			winrate = 0;
-			std::vector<Deals> list_deals;
+			std::vector<Deal> list_deals;
 			int err = get_fixed_number_deals(
 				list_deals,
 				symbol_index,
@@ -1027,9 +1062,9 @@ namespace easy_bo {
 				const uint32_t stop_minute_day,
 				const uint32_t number_deals,
 				const xtime::timestamp_t stop_timestamp,
-				std::function<void(std::vector<Deals> &deals)> callback = nullptr) {
+				std::function<void(std::vector<Deal> &deals)> callback = nullptr) {
 			winrate = 0;
-			std::vector<Deals> list_deals;
+			std::vector<Deal> list_deals;
 			int err = get_fixed_number_deals(
 				list_deals,
 				symbol_name,
@@ -1054,7 +1089,7 @@ namespace easy_bo {
          * \param deal Сделка
 		 * \return Вернет 0 в случае успеха, иначе см. код ошибок в xquotes_common.hpp
          */
-		int add_deals(const Deals& deal) {
+		int add_deals(const Deal& deal) {
 			if(date_timestamp != xtime::get_first_timestamp_day(deal.timestamp)) {
 				/* если новый день, то пора загрузить предыдущие данные в хранилище
 				 * но сначала их надо слить с теми данными, что уже есть в хранилище (если они есть)
@@ -1066,15 +1101,15 @@ namespace easy_bo {
 					 */
 					if(list_write_deals.size() != 0) {
 						sort_list_deals(list_write_deals); // посортируем массив преде записью
-						int err = write_deals(list_write_deals, date_timestamp);
+						int err = write_deals<STORAGE_TYPE>(list_write_deals, date_timestamp);
 						if(err != xquotes_common::OK) return err;
 						list_write_deals.clear();
 					}
 					list_write_deals.push_back(deal);
 				} else {
 					/* данные уже есть! Придется сначала прочитать старые данные */
-					std::vector<Deals> temp;
-					int err = read_deals(temp, date_timestamp);
+					std::vector<Deal> temp;
+					int err = read_deals<STORAGE_TYPE>(temp, date_timestamp);
 					if(err != xquotes_common::OK) return err;
 					/* добавим во временный массив не повторяющиеся сделки */
 					if(temp.size() > 0) {
@@ -1090,7 +1125,7 @@ namespace easy_bo {
 						if(temp.size() > 0) sort_list_deals(temp);
 					}
 					/* а теперь все обратно запишем */
-					err = write_deals(temp, date_timestamp);
+					err = write_deals<STORAGE_TYPE>(temp, date_timestamp);
 					if(err != xquotes_common::OK) return err;
 					/* теперь очистим массив сделок и добавим новую сделку за новую дату */
 					list_write_deals.clear();
@@ -1098,7 +1133,7 @@ namespace easy_bo {
 				}
 				date_timestamp = xtime::get_first_timestamp_day(deal.timestamp);
 			} else {
-				/* таже самая дата, просто добавим сделку, предварительно проверив на совпадение */
+				/* Если та же самая дата, просто добавим сделку, предварительно проверив на совпадение */
 				if(check_repeat_deal(list_write_deals, deal)) return OK;
 				list_write_deals.push_back(deal);
 				/* хрен с ним, с идеальным кодом */
@@ -1127,21 +1162,24 @@ namespace easy_bo {
             const int8_t result,
             const uint32_t duration,
             xtime::timestamp_t timestamp) {
-            Deals deals;
-            deals.name = name;
-            deals.symbol = symbol;
-            deals.group = group;
-            deals.direction = direction;
-            deals.result = result;
-            deals.duration = duration;
-            deals.timestamp = timestamp;
-            return add_deals(deals);
+            Deal deal;
+            deal.set_name(name);
+            deal.symbol = symbol;
+            deal.group = group;
+            deal.direction = direction;
+            deal.result = result;
+            deal.duration = duration;
+            deal.timestamp = timestamp;
+            return add_deals(deal);
         }
 
-		~DealsDataStore() {
+		~DealsDataStoreTemplate() {
 			save();
 		}
 	};
+
+	typedef DealsDataStoreTemplate<> DealsDataStore;    /**< Хранилище сделок с использованием JSON */
+	typedef DealsDataStoreTemplate<ArrayDealsStorage> FastDealsDataStore;   /**< Хранилище строк с использованием бинарных данных */
 }
 
 #endif // EASY_BO_STANDARD_TESTER_HPP_INCLUDED
