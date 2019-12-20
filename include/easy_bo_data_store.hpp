@@ -24,15 +24,17 @@
 #ifndef EASY_BO_DATA_STORE_HPP_INCLUDED
 #define EASY_BO_DATA_STORE_HPP_INCLUDED
 
+#include <vector>
+#include <algorithm>
+#include <limits>
+#include <type_traits>
+#include <list>
+
 #include "easy_bo_common.hpp"
 #include "easy_bo_simplifed_tester.hpp"
 #include "easy_bo_fast_storage.hpp"
 #include "xquotes_json_storage.hpp"
 #include "xtime.hpp"
-#include <vector>
-#include <algorithm>
-#include <limits>
-#include <type_traits>
 
 namespace easy_bo {
 
@@ -284,7 +286,7 @@ namespace easy_bo {
                 const xtime::timestamp_t timestamp,
                 std::function<void(std::vector<Deal> &deals)> callback = nullptr) {
             if(!check_timestamp(timestamp)) return easy_bo::NO_DATA_ACCESS;
-            int err = read_deals(list_deals, timestamp);
+            int err = read_deals<STORAGE_TYPE>(list_deals, timestamp);
             if(err != easy_bo::OK) return err;
             sort_list_deals(list_deals);
             if(callback != nullptr) callback(list_deals);
@@ -306,6 +308,7 @@ namespace easy_bo {
                     std::vector<Deal> &deals,
                     const xtime::timestamp_t timestamp)> callback,
                 const xtime::timestamp_t step = xtime::SECONDS_IN_MINUTE) {
+
             const xtime::timestamp_t start = xtime::get_first_timestamp_day(timestamp);
             if(!check_timestamp(start)) return easy_bo::NO_DATA_ACCESS;
             std::vector<Deal> list_deals;
@@ -329,6 +332,14 @@ namespace easy_bo {
             return easy_bo::OK;
         }
 
+        /** \brief Торговать за указанный период
+         *
+         * \param start_date_timestamp Начальная дата
+         * \param stop_date_timestamp Конечная дата
+         * \param callback Обработчик сделок
+         * \param step Шаг времени внутри дня, по умолчанию минута
+         * \return Вернет 0 если были данные
+         */
         int trade(
                 const xtime::timestamp_t start_date_timestamp,
                 const xtime::timestamp_t stop_date_timestamp,
@@ -336,11 +347,16 @@ namespace easy_bo {
                         std::vector<Deal> &deals,
                         const xtime::timestamp_t timestamp)> callback,
                 const xtime::timestamp_t step = xtime::SECONDS_IN_MINUTE) {
+            const xtime::timestamp_t end_timestamp = xtime::get_first_timestamp_day(stop_date_timestamp);
             int counter = 0;
-            for(xtime::timestamp_t t = start_date_timestamp; t <= stop_date_timestamp; t += xtime::SECONDS_IN_DAY) {
+            for(xtime::timestamp_t t = xtime::get_first_timestamp_day(start_date_timestamp);
+                t <= end_timestamp;
+                t += xtime::SECONDS_IN_DAY) {
                 int err = trade(t, callback, step);
                 if(err == easy_bo::OK) ++counter;
             }
+            if(counter == 0) return easy_bo::NO_DATA_ACCESS;
+            return easy_bo::OK;
         }
 
         /** \brief Обработать сделки за несколько дней
@@ -1137,7 +1153,7 @@ namespace easy_bo {
          * \param deal Сделка
 		 * \return Вернет 0 в случае успеха, иначе см. код ошибок в xquotes_common.hpp
          */
-		int add_deals(const Deal& deal) {
+		int add_deal(const Deal& deal) {
 			if(date_timestamp != xtime::get_first_timestamp_day(deal.timestamp)) {
 				/* если новый день, то пора загрузить предыдущие данные в хранилище
 				 * но сначала их надо слить с теми данными, что уже есть в хранилище (если они есть)
@@ -1190,7 +1206,7 @@ namespace easy_bo {
 			return OK;
 		}
 
-        /** \brief
+        /** \brief Добавить сделку
          *
          * \param name Имя символа
          * \param symbol Индекс символа
@@ -1199,10 +1215,9 @@ namespace easy_bo {
          * \param result Результат опциона, победа или поражение
          * \param duration Продолжительность бинарного опциона в секундах
          * \param timestamp Метка времени начала бинарного опицона
-         * \return
-         *
+         * \return Код ошибки
          */
-		int add_deals(
+		int add_deal(
             const std::string &name,
             const uint8_t symbol,
             const uint8_t group,
@@ -1218,7 +1233,39 @@ namespace easy_bo {
             deal.result = result;
             deal.duration = duration;
             deal.timestamp = timestamp;
-            return add_deals(deal);
+            return add_deal(deal);
+        }
+
+        /** \brief Получить список уникальных символов
+         *
+         * Данный метод поможет определить список используемых в статистике сделок символов (валютных пар)
+         * \return Список используемых в статистике сделок символов (валютных пар)
+         */
+        std::list<std::string> get_list_unique_symbols() {
+            xtime::timestamp_t min_timestamp = 0, max_timestamp = 0;
+            int err = get_min_max_timestamp(min_timestamp, max_timestamp);
+            if(err != easy_bo::OK) return std::list<std::string>();
+            std::list<std::string> symbol_list;
+            xtime::for_days(min_timestamp, max_timestamp, [&](const xtime::timestamp_t &t){
+                std::vector<Deal> list_deals;
+                int err = get_deals(list_deals, t);
+                if(err != easy_bo::OK) return;
+                std::for_each(list_deals.begin(), list_deals.end(), [&](const Deal &d) {
+                    symbol_list.push_back(d.get_name());
+                });
+            });
+            symbol_list.sort();
+            symbol_list.unique();
+            return symbol_list;
+        }
+
+        /** \brief Получить количество символов
+         *
+         * Данный метод поможет определить количество используемых в статистике сделок символов (валютных пар)
+         * \return Вернет количество используемых символов или 0, если ошибка
+         */
+        uint32_t get_number_unique_symbols() {
+            return get_list_unique_symbols().size();
         }
 
 		~DealsDataStoreTemplate() {
