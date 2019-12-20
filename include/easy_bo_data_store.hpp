@@ -1268,6 +1268,40 @@ namespace easy_bo {
             return get_list_unique_symbols().size();
         }
 
+        /** \brief Получить массив индексов символов
+         *
+         * Данный метод поможет определить список используемых в статистике сделок индексы символов (валютных пар).
+         * Метод фильтрует массив сделок
+         * \return Упорядоченный список используемых в статистике сделок индексов символов (валютных пар)
+         */
+        template<class T>
+        std::list<T> get_list_index_symbols() {
+            xtime::timestamp_t min_timestamp = 0, max_timestamp = 0;
+            int err = get_min_max_timestamp(min_timestamp, max_timestamp);
+            if(err != easy_bo::OK) return std::list<T>();
+            std::list<T> symbol_list;
+            xtime::for_days(min_timestamp, max_timestamp, [&](const xtime::timestamp_t &t){
+                std::vector<Deal> list_deals;
+                int err = get_deals(list_deals, t);
+                if(err != easy_bo::OK) return;
+                std::for_each(list_deals.begin(), list_deals.end(), [&](const Deal &d) {
+                    symbol_list.push_back(d.symbol);
+                });
+            });
+            symbol_list.sort();
+            symbol_list.unique();
+            return symbol_list;
+        }
+
+        /** \brief Получить максимальный индекс символа
+         * \return Максимальный индекс символа. Если индекс равен 0, возможно это ошибка
+         */
+        uint32_t get_max_index_symbols() {
+            std::list<uint32_t> temp = get_list_index_symbols<uint32_t>();
+            if(temp.size() == 0) return 0;
+            return temp.back();
+        }
+
 		~DealsDataStoreTemplate() {
 			save();
 		}

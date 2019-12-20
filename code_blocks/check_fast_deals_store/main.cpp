@@ -62,7 +62,7 @@ int main(int argc, char* argv[]) {
     std::for_each(list_unique_symbols.begin(), list_unique_symbols.end(), [&](const std::string &s) {
         std::cout << " " << s;
     });
-
+    std::cout << "max index symbols: " << iDealsDataStore.get_max_index_symbols() << std::endl;
 
     /*
     if(0) {
