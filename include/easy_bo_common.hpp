@@ -41,7 +41,7 @@ namespace easy_bo {
         EASY_BO_LOSS = -1,  ///< Убычтоный бинарный опцион
         EASY_BO_NEUTRAL = 0,///< Бинарный опцон в ничью
     };
-	
+
 	/// Набор возможных состояний ошибки
 	enum {
 		OK = 0,                 ///< Ошибок нет, все в порядке
@@ -279,10 +279,11 @@ namespace easy_bo {
             if(curve[i] > max_value) max_value = curve[i];
             if(curve[i] < max_value) {
                 NUM_TYPE difference = max_value - curve[i];
+                difference /= (NUM_TYPE)max_value;
                 if(difference > max_difference) max_difference = difference;
             }
         }
-        return (T1)(max_difference / max_value);
+        return (T1)max_difference;
     }
 };
 
