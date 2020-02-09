@@ -245,26 +245,31 @@ namespace easy_bo {
 			if(list_write_deals.size() > 0 && date_timestamp != 0) {
 				/* данные уже есть! Придется сначала прочитать старые данные */
 				std::vector<Deal> temp;
-				int err = read_deals<STORAGE_TYPE>(temp, date_timestamp);
-				if(err != xquotes_common::OK) {
-					iStorage.save();
-					return err;
-				}
-				/* добавим во временный массив не повторяющиеся сделки */
-				if(temp.size() > 0) {
-					for(size_t i = 0; i < list_write_deals.size(); ++i) {
-						if(!check_repeat_deal(temp, list_write_deals[i])) {
-							temp.push_back(list_write_deals[i]);
-							/* ужасно не оптимальный код */
-							sort_list_deals(temp);
-						}
-					}
+				if(check_timestamp(date_timestamp)) {
+                    int err = read_deals<STORAGE_TYPE>(temp, date_timestamp);
+                    if(err != xquotes_common::OK) {
+                        iStorage.save();
+                        return err;
+                    }
+                    /* добавим во временный массив не повторяющиеся сделки */
+                    if(temp.size() > 0) {
+                        for(size_t i = 0; i < list_write_deals.size(); ++i) {
+                            if(!check_repeat_deal(temp, list_write_deals[i])) {
+                                temp.push_back(list_write_deals[i]);
+                                /* ужасно не оптимальный код */
+                                sort_list_deals(temp);
+                            }
+                        }
+                    } else {
+                        temp = list_write_deals;
+                        if(temp.size() > 0) sort_list_deals(temp);
+                    }
 				} else {
-					temp = list_write_deals;
-					if(temp.size() > 0) sort_list_deals(temp);
+                    temp = list_write_deals;
+                    if(temp.size() > 0) sort_list_deals(temp);
 				}
 				/* а теперь все обратно запишем */
-				err = write_deals<STORAGE_TYPE>(temp, date_timestamp);
+				int err = write_deals<STORAGE_TYPE>(temp, date_timestamp);
 				if(err != xquotes_common::OK) {
 					iStorage.save();
 					return err;
