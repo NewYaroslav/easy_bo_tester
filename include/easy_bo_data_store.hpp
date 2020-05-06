@@ -1211,6 +1211,16 @@ namespace easy_bo {
 			return OK;
 		}
 
+        /** \brief Очистить статистику за указанную дату
+         *
+         * \param timestamp_date Дата статистки сделок
+         * \return Код ошибки
+         */
+		int clear_date(const xtime::timestamp_t timestamp_date) {
+            std::vector<Deal> temp;
+            return write_deals<STORAGE_TYPE>(temp, timestamp_date);
+		}
+
         /** \brief Добавить сделку
          *
          * \param name Имя символа

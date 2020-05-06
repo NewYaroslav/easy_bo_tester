@@ -1,0 +1,13 @@
+
+# C extensions
+*.so
+*.cookie
+
+code_blocks/*/obj/
+code_blocks/*/*.dll
+code_blocks/*/*.depend
+code_blocks/*/*.layout
+code_blocks/*/gmon.out
+code_blocks/*/bin/
+code_blocks/*/*.exe
+*.save-failed
