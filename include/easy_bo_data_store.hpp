@@ -1217,6 +1217,7 @@ namespace easy_bo {
          * \return Код ошибки
          */
 		int clear_date(const xtime::timestamp_t timestamp_date) {
+            if(!check_timestamp(date_timestamp)) return OK;
             std::vector<Deal> temp;
             return write_deals<STORAGE_TYPE>(temp, timestamp_date);
 		}
