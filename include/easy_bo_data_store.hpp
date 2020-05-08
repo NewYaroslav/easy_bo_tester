@@ -246,11 +246,21 @@ namespace easy_bo {
 				/* данные уже есть! Придется сначала прочитать старые данные */
 				std::vector<Deal> temp;
 				if(check_timestamp(date_timestamp)) {
+
+#                   if(0)
+                    /* данные изменения связаны с тем, что в случае
+                     * отсутствия сделок, метод read_deals
+                     * возвращает код ошибки
+                     */
                     int err = read_deals<STORAGE_TYPE>(temp, date_timestamp);
                     if(err != xquotes_common::OK) {
                         iStorage.save();
                         return err;
                     }
+#                   else
+                    read_deals<STORAGE_TYPE>(temp, date_timestamp);
+#                   endif
+
                     /* добавим во временный массив не повторяющиеся сделки */
                     if(temp.size() > 0) {
                         for(size_t i = 0; i < list_write_deals.size(); ++i) {
@@ -1216,7 +1226,7 @@ namespace easy_bo {
          * \param timestamp_date Дата статистки сделок
          * \return Код ошибки
          */
-		int clear_date(const xtime::timestamp_t timestamp_date) {
+		int clear_deals(const xtime::timestamp_t timestamp_date) {
             if(!check_timestamp(date_timestamp)) return OK;
             std::vector<Deal> temp;
             return write_deals<STORAGE_TYPE>(temp, timestamp_date);
