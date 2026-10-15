@@ -128,26 +128,26 @@ C++ header-only библиотека для тестирования бинар�
 
 Библиотека *easy_bo_tester* зависит от:
 
-* C++ библиотека  для работы с временем и датой *xtime_cpp* - [https://github.com/NewYaroslav/xtime_cpp](https://github.com/NewYaroslav/xtime_cpp)
+* C++ библиотека  для работы с временем и датой *xtime_cpp* - [https://github.com/LimiNode/xtime_cpp](https://github.com/LimiNode/xtime_cpp)
 
 Остальные зависисмости нужны только для программы-примера тестирования ТС на исторических, расположенной тут: *code_bloocks/standard_tester_with_balance_chart*
 
 "Почти" все зависимости, это header-only библиотеки. 
 
-* Рисование графиков в С++ на базе *freeglut* - [easy_plot_cpp](https://github.com/NewYaroslav/easy_plot_cpp)
+* Рисование графиков в С++ на базе *freeglut* - [easy_plot_cpp](https://github.com/LimiNode/easy_plot_cpp)
 Данная библиотека зависит от *freeglut*, подробнее про устанвоку читайте в репозитории *easy_plot_cpp*.
-* Библиотека для хранения и доступа к данным в сжатом виде (котировки и пр.) - [xquotes_history](https://github.com/NewYaroslav/xquotes_history) 
+* Библиотека для хранения и доступа к данным в сжатом виде (котировки и пр.) - [xquotes_history](https://github.com/LimiNode/xquotes_history) 
 Данная библиотека зависит от *zstd*, подробнее про устанвоку читайте в репозитории *xquotes_history*.
-* Библиотека технического анализа: https://github.com/NewYaroslav/xtechnical_analysis
-* Исторчиеские данные FXCM: https://github.com/NewYaroslav/finam_history_quotes
+* Библиотека технического анализа: https://github.com/LimiNode/xtechnical_analysis
+* Исторчиеские данные FXCM: https://github.com/LimiNode/finam_history_quotes
 
 Все зависимости добавлены как субмодули в папку *lib*
 
 ### Полезные ссылки
 
-* Рисование графиков в С++ на базе *freeglut* - [easy_plot_cpp](https://github.com/NewYaroslav/easy_plot_cpp)
-* Библиотека для хранения и доступа к данным в сжатом виде (котировки и пр.) - [xquotes_history](https://github.com/NewYaroslav/xquotes_history) 
-* Котировки от *Финам* сжатые при помощи библиотеки *xquotes_history* - [finam_history_quotes](https://github.com/NewYaroslav/finam_history_quotes)
-* Котировки от *binary.com* сжатые при помощи библиотеки *xquotes_history* - [binary.com_history_quotes](https://github.com/NewYaroslav/binary.com_history_quotes)
-* Библиотека технического анализа для С++ - [xtechnical_analysis](https://github.com/NewYaroslav/xtechnical_analysis)
+* Рисование графиков в С++ на базе *freeglut* - [easy_plot_cpp](https://github.com/LimiNode/easy_plot_cpp)
+* Библиотека для хранения и доступа к данным в сжатом виде (котировки и пр.) - [xquotes_history](https://github.com/LimiNode/xquotes_history) 
+* Котировки от *Финам* сжатые при помощи библиотеки *xquotes_history* - [finam_history_quotes](https://github.com/LimiNode/finam_history_quotes)
+* Котировки от *binary.com* сжатые при помощи библиотеки *xquotes_history* - [binary.com_history_quotes](https://github.com/LimiNode/binary.com_history_quotes)
+* Библиотека технического анализа для С++ - [xtechnical_analysis](https://github.com/LimiNode/xtechnical_analysis)
 
